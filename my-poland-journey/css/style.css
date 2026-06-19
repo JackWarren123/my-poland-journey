@@ -1,0 +1,446 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  background-color: #ede8df;
+  color: #2a2520;
+  font-family: Georgia, 'Times New Roman', serif;
+  overflow: hidden;
+}
+
+#app {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+#header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  padding: 20px 28px;
+  pointer-events: none;
+}
+
+#header h1 {
+  font-size: 1.35rem;
+  font-weight: normal;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #3a3025;
+}
+
+#header p {
+  font-size: 0.78rem;
+  color: #8a7f6f;
+  letter-spacing: 0.05em;
+  margin-top: 3px;
+  font-style: italic;
+}
+
+/* Map container */
+#map {
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#map svg {
+  display: block;
+}
+
+/* Map geography */
+.modern-border {
+  fill: #f5f0e4;
+  stroke: #7a6e5e;
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+}
+
+.border-1939 {
+  fill: none;
+  stroke: #8b5e3c;
+  stroke-width: 2;
+  stroke-dasharray: 8, 5;
+  opacity: 0.85;
+  vector-effect: non-scaling-stroke;
+}
+
+/* City pins */
+.city-pin {
+  stroke: #ede8df;
+  stroke-width: 0.7;
+  cursor: pointer;
+  transition: r 0.15s ease, opacity 0.15s ease;
+  vector-effect: non-scaling-stroke;
+}
+
+.city-pin:hover {
+  opacity: 0.8;
+}
+
+.city-pin.active {
+  stroke: #2a2520;
+  stroke-width: 2;
+}
+
+/* Info panel */
+#info-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 360px;
+  height: 100%;
+  background: #faf8f3;
+  border-left: 1px solid #d4ccbc;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  overflow: hidden;
+}
+
+#info-panel.visible {
+  transform: translateX(0);
+}
+
+#panel-header {
+  padding: 28px 28px 20px;
+  border-bottom: 1px solid #d4ccbc;
+  position: relative;
+  flex-shrink: 0;
+}
+
+#close-panel {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: #a09880;
+  font-size: 1.4rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px 8px;
+  transition: color 0.15s;
+  font-family: inherit;
+}
+
+#close-panel:hover {
+  color: #2a2520;
+}
+
+#panel-type-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 2px;
+  margin-bottom: 10px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+#panel-name {
+  font-size: 1.6rem;
+  font-weight: normal;
+  color: #1e1a14;
+  line-height: 1.2;
+  margin-bottom: 6px;
+}
+
+#panel-hebrew {
+  font-size: 1.1rem;
+  color: #8a7f6f;
+  direction: rtl;
+  font-style: italic;
+}
+
+#panel-body {
+  padding: 24px 28px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+#panel-body::-webkit-scrollbar {
+  width: 4px;
+}
+#panel-body::-webkit-scrollbar-track {
+  background: #faf8f3;
+}
+#panel-body::-webkit-scrollbar-thumb {
+  background: #d4ccbc;
+  border-radius: 2px;
+}
+
+#panel-summary {
+  font-size: 0.9rem;
+  line-height: 1.8;
+  color: #4a4438;
+  font-style: italic;
+}
+
+#panel-footer {
+  padding: 18px 28px;
+  border-top: 1px solid #d4ccbc;
+  flex-shrink: 0;
+}
+
+#panel-source {
+  font-size: 0.72rem;
+  color: #a09880;
+  letter-spacing: 0.04em;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  text-decoration: none;
+  font-style: normal;
+}
+
+#panel-source:hover {
+  color: #2a2520;
+}
+
+/* Legend */
+#legend {
+  position: absolute;
+  bottom: 28px;
+  left: 28px;
+  z-index: 10;
+  background: rgba(250, 248, 243, 0.92);
+  border: 1px solid #d4ccbc;
+  border-radius: 4px;
+  padding: 14px 18px;
+}
+
+.legend-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #a09880;
+  margin-bottom: 10px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 7px;
+  font-size: 0.78rem;
+  color: #5a5040;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.legend-item:last-child {
+  margin-bottom: 0;
+}
+
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid rgba(0,0,0,0.15);
+}
+
+.dot.community { background: #3a7bc8; }
+.dot.ghetto    { background: #c87c10; }
+.dot.camp      { background: #b02820; }
+.dot.massacre  { background: #7b3a9e; }
+.dot.synagogue { background: #1e8a4a; }
+
+.legend-dash {
+  width: 22px;
+  height: 2px;
+  background: repeating-linear-gradient(
+    to right,
+    #8b5e3c 0px,
+    #8b5e3c 6px,
+    transparent 6px,
+    transparent 11px
+  );
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+/* Badge colors by type */
+.badge-community { background: rgba(58, 123, 200, 0.12); color: #2a5e9e; }
+.badge-ghetto    { background: rgba(200, 124, 16, 0.12); color: #9e5a08; }
+.badge-camp      { background: rgba(176, 40, 32, 0.12);  color: #8e1810; }
+
+/* City labels on map */
+.city-label {
+  font-family: Georgia, serif;
+  font-size: 3px;
+  fill: #6a5e4e;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Map controls */
+#controls {
+  position: absolute;
+  top: 22px;
+  right: 28px;
+  z-index: 12;
+}
+
+#find-nearest-btn {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #3a3025;
+  background: rgba(250, 248, 243, 0.92);
+  border: 1px solid #c4b9a4;
+  border-radius: 3px;
+  padding: 9px 16px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+#find-nearest-btn:hover {
+  background: #f0ead8;
+  border-color: #8b5e3c;
+}
+
+/* Zoomed in: grab cursor signals the map can be dragged to pan */
+body.map-zoomed #map { cursor: grab; }
+body.map-zoomed #map svg:active { cursor: grabbing; }
+
+/* Select mode: crosshair over the map + active button styling */
+body.select-mode #map { cursor: crosshair; }
+body.select-mode .city-pin { cursor: crosshair; }
+
+body.select-mode #find-nearest-btn {
+  background: #8b5e3c;
+  color: #faf8f3;
+  border-color: #8b5e3c;
+}
+
+#select-hint {
+  display: none;
+  position: absolute;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 12;
+  background: rgba(42, 37, 32, 0.9);
+  color: #faf8f3;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  padding: 8px 16px;
+  border-radius: 3px;
+}
+
+body.select-mode #select-hint { display: block; }
+
+/* Nearest-places panel */
+#nearest-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 360px;
+  height: 100%;
+  background: #faf8f3;
+  border-left: 1px solid #d4ccbc;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  overflow: hidden;
+}
+
+#nearest-panel.visible { transform: translateX(0); }
+
+#nearest-header {
+  padding: 28px 28px 20px;
+  border-bottom: 1px solid #d4ccbc;
+  position: relative;
+  flex-shrink: 0;
+}
+
+#nearest-header h2 {
+  font-size: 1.4rem;
+  font-weight: normal;
+  color: #1e1a14;
+}
+
+#nearest-subtitle {
+  font-size: 0.78rem;
+  color: #8a7f6f;
+  font-style: italic;
+  margin-top: 6px;
+}
+
+#close-nearest {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: #a09880;
+  font-size: 1.4rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px 8px;
+  transition: color 0.15s;
+  font-family: inherit;
+}
+
+#close-nearest:hover { color: #2a2520; }
+
+#nearest-list {
+  list-style: none;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.nearest-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 28px;
+  border-bottom: 1px solid #e8e1d3;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.nearest-name {
+  flex: 1;
+  font-size: 0.92rem;
+  color: #2a2520;
+}
+
+.nearest-dist {
+  font-size: 0.72rem;
+  color: #8a7f6f;
+  white-space: nowrap;
+}
+
+/* Click-to-dismiss overlay when panel open */
+#map-overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  cursor: pointer;
+}
+
+#map-overlay.active {
+  display: block;
+}

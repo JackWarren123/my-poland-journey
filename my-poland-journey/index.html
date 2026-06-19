@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Poland Journey</title>
+  <link rel="stylesheet" href="css/style.css?v=3">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+  <div id="app">
+
+    <div id="header">
+      <h1>My Poland Journey</h1>
+      <p>Jewish Life and the Holocaust — Click a city to learn its history</p>
+    </div>
+
+    <!-- Map controls -->
+    <div id="controls">
+      <button id="find-nearest-btn">Find Nearest Places</button>
+    </div>
+
+    <!-- Hint shown while in select mode -->
+    <div id="select-hint">Click anywhere on the map to find the 5 nearest places</div>
+
+    <div id="map"></div>
+
+    <!-- Overlay to close panel on map click -->
+    <div id="map-overlay"></div>
+
+    <!-- Nearest-places results panel -->
+    <div id="nearest-panel">
+      <div id="nearest-header">
+        <button id="close-nearest" aria-label="Close">×</button>
+        <h2>Nearest Places</h2>
+        <p id="nearest-subtitle"></p>
+      </div>
+      <ul id="nearest-list"></ul>
+    </div>
+
+    <!-- Info panel -->
+    <div id="info-panel">
+      <div id="panel-header">
+        <button id="close-panel" aria-label="Close">×</button>
+        <span id="panel-type-badge"></span>
+        <h2 id="panel-name"></h2>
+        <p id="panel-hebrew"></p>
+      </div>
+      <div id="panel-body">
+        <p id="panel-summary"></p>
+      </div>
+      <div id="panel-footer">
+        <a id="panel-source" target="_blank" rel="noopener"></a>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div id="legend">
+      <div class="legend-label">Map Key</div>
+      <div class="legend-item"><span class="dot community"></span> Jewish Community</div>
+      <div class="legend-item"><span class="dot ghetto"></span> Ghetto</div>
+      <div class="legend-item"><span class="dot camp"></span> Extermination / Concentration Camp</div>
+      <div class="legend-item"><span class="legend-dash"></span> 1939 Borders</div>
+    </div>
+
+  </div>
+  <script src="js/map.js?v=3"></script>
+</body>
+</html>

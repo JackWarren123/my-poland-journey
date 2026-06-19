@@ -1,0 +1,75 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="css/style.css?v=3">
+<script src="https://d3js.org/d3.v7.min.js"></script></head><body>
+<body>
+  <div id="app">
+
+    <div id="header">
+      <h1>My Poland Journey</h1>
+      <p>Jewish Life and the Holocaust — Click a city to learn its history</p>
+    </div>
+
+    <!-- Map controls -->
+    <div id="controls">
+      <button id="find-nearest-btn">Find Nearest Places</button>
+    </div>
+
+    <!-- Hint shown while in select mode -->
+    <div id="select-hint">Click anywhere on the map to find the 5 nearest places</div>
+
+    <div id="map"></div>
+
+    <!-- Overlay to close panel on map click -->
+    <div id="map-overlay"></div>
+
+    <!-- Nearest-places results panel -->
+    <div id="nearest-panel">
+      <div id="nearest-header">
+        <button id="close-nearest" aria-label="Close">×</button>
+        <h2>Nearest Places</h2>
+        <p id="nearest-subtitle"></p>
+      </div>
+      <ul id="nearest-list"></ul>
+    </div>
+
+    <!-- Info panel -->
+    <div id="info-panel">
+      <div id="panel-header">
+        <button id="close-panel" aria-label="Close">×</button>
+        <span id="panel-type-badge"></span>
+        <h2 id="panel-name"></h2>
+        <p id="panel-hebrew"></p>
+      </div>
+      <div id="panel-body">
+        <p id="panel-summary"></p>
+      </div>
+      <div id="panel-footer">
+        <a id="panel-source" target="_blank" rel="noopener"></a>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div id="legend">
+      <div class="legend-label">Map Key</div>
+      <div class="legend-item"><span class="dot community"></span> Jewish Community</div>
+      <div class="legend-item"><span class="dot ghetto"></span> Ghetto</div>
+      <div class="legend-item"><span class="dot camp"></span> Extermination / Concentration Camp</div>
+      <div class="legend-item"><span class="legend-dash"></span> 1939 Borders</div>
+    </div>
+
+  </div>
+  
+</body>
+<script src="js/map.js?v=3"></script>
+<script>
+setTimeout(() => {
+  const [px, py] = projection([19.94, 50.06]);
+  zoomGroup.attr('transform', 'translate(100,100) scale(6)');
+  const zg = document.querySelector('.zoom-group');
+  const svg = document.querySelector('#map svg');
+  document.title = 'proj=' + Math.round(px) + ',' + Math.round(py)
+    + ' | zg children=' + (zg ? zg.childElementCount : 'NONE')
+    + ' | zg.transform=' + (zg ? zg.getAttribute('transform') : 'NONE')
+    + ' | svg direct g count=' + svg.querySelectorAll(':scope > g').length;
+}, 2500);
+</script></body></html>
