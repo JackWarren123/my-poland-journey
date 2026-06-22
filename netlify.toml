@@ -1,0 +1,4 @@
+[build]
+	base = "my-poland-journey"
+	publish = "my-poland-journey"
+	command = ""
