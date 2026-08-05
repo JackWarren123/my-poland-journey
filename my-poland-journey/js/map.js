@@ -360,9 +360,9 @@ function renderHistoryPane() {
   const contentEl = document.getElementById('panel-content');
   contentEl.innerHTML = '';
 
-  if (panelState.contentIsEmpty) {
+  if (!panelState.city || !panelState.city.content || panelState.city.content.trim() === '') {
     contentEl.innerHTML = '<div class="empty-state">No history available yet</div>';
-  } else if (panelState.city && panelState.city.content) {
+  } else {
     contentEl.innerHTML = panelState.city.content;
   }
 }
@@ -371,9 +371,9 @@ function renderVideosPane() {
   const testimonialsEl = document.getElementById('panel-testimonials');
   testimonialsEl.innerHTML = '';
 
-  if (panelState.videosAreEmpty) {
+  if (!panelState.city || !panelState.city.testimonials || panelState.city.testimonials.length === 0) {
     testimonialsEl.innerHTML = '<div class="empty-state">No videos available yet</div>';
-  } else if (panelState.city && panelState.city.testimonials) {
+  } else {
     const testimonials = panelState.city.testimonials;
     testimonials.forEach((item, index) => {
       const iframeHtml = typeof item === 'string' ? item : item.html;
