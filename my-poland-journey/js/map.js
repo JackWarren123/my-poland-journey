@@ -16,6 +16,22 @@ const TYPE_LABELS = {
 
 let activePinId = null;
 
+// Tab panel state (transient; reset on every city selection)
+let panelState = {
+  city: null,
+  cityId: null,
+  activeTab: 'history',
+  currentVideoIndex: 0,
+  currentSeriesId: null,
+  videoWasInteracted: false,
+  videoPlayers: {},
+  contentIsEmpty: false,
+  videosAreEmpty: false,
+};
+
+// YouTube IFrame API state
+let youtubeAPIReady = false;
+
 // Lifted to module scope so the nearest-places feature can invert clicks and
 // read the city list after init().
 let projection = null;
@@ -181,9 +197,207 @@ function init() {
   document.getElementById('close-nearest').addEventListener('click', closeNearestPanel);
   // Capture phase so a click in select mode is handled before pin/overlay handlers.
   document.getElementById('map').addEventListener('click', handleMapSelectClick, true);
+
+  // Set up tab click handlers
+  setupTabHandlers();
+}
+
+function isContentEmpty(city) {
+  return !city.content || city.content.trim() === '';
+}
+
+function areVideosEmpty(city) {
+  return !city.testimonials || city.testimonials.length === 0;
+}
+
+function setupTabHandlers() {
+  const tabButtons = document.querySelectorAll('.tab-button');
+  tabButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const tab = button.getAttribute('data-tab');
+      switchTab(tab);
+    });
+  });
+}
+
+function switchTab(tabName) {
+  panelState.activeTab = tabName;
+
+  const tabButtons = document.querySelectorAll('.tab-button');
+  tabButtons.forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.getAttribute('data-tab') === tabName) {
+      btn.classList.add('active');
+    }
+  });
+
+  const tabPanes = document.querySelectorAll('.tab-pane');
+  tabPanes.forEach(pane => {
+    pane.classList.add('hidden');
+    if (pane.id === `tab-${tabName}`) {
+      pane.classList.remove('hidden');
+    }
+  });
+
+  // Render tab content when switching tabs
+  if (tabName === 'history') {
+    renderHistoryPane();
+  } else if (tabName === 'videos') {
+    renderVideosPane();
+    // Load YouTube API and attach autoplay listeners after videos are rendered
+    loadYouTubeAPI().then(() => {
+      attachAutoplayListeners();
+    });
+  }
+}
+
+function loadYouTubeAPI() {
+  return new Promise((resolve) => {
+    if (youtubeAPIReady && window.YT && window.YT.Player) {
+      resolve();
+      return;
+    }
+
+    if (window.YT && window.YT.Player) {
+      youtubeAPIReady = true;
+      resolve();
+      return;
+    }
+
+    // Load YouTube API script
+    const tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+    // Set callback for when API is ready
+    window.onYouTubeIframeAPIReady = () => {
+      youtubeAPIReady = true;
+      resolve();
+    };
+
+    // Timeout in case API fails to load
+    setTimeout(() => {
+      youtubeAPIReady = true;
+      resolve();
+    }, 5000);
+  });
+}
+
+function attachAutoplayListeners() {
+  if (!youtubeAPIReady || !window.YT || !window.YT.Player) {
+    console.log('YouTube API not ready, autoplay disabled');
+    return;
+  }
+
+  const iframes = document.querySelectorAll('#tab-videos iframe');
+  const players = {};
+
+  iframes.forEach((iframe, index) => {
+    const videoId = extractYouTubeVideoId(iframe.src);
+    if (!videoId) return;
+
+    try {
+      const player = new YT.Player(iframe, {
+        events: {
+          onStateChange: (event) => onVideoStateChange(event, index),
+          onError: (event) => console.log('YouTube player error:', event),
+        },
+      });
+      players[index] = player;
+    } catch (err) {
+      console.log('Could not create YouTube player for iframe', index, err);
+    }
+  });
+
+  panelState.videoPlayers = players;
+
+  // Attach user interaction listeners
+  iframes.forEach((iframe, index) => {
+    iframe.addEventListener('click', () => {
+      panelState.videoWasInteracted = true;
+    });
+  });
+}
+
+function extractYouTubeVideoId(url) {
+  const match = url.match(/embed\/([a-zA-Z0-9_-]+)/);
+  return match ? match[1] : null;
+}
+
+function onVideoStateChange(event, videoIndex) {
+  // 0 = UNSTARTED, 1 = ENDED, 2 = PLAYING, 3 = PAUSED, 5 = CUED
+  if (event.data === 0) {
+    // Video unstarted - reset interaction flag
+    panelState.videoWasInteracted = false;
+  } else if (event.data === 1) {
+    // Video ended - advance to next video in series if applicable
+    advanceToNextSeriesVideo(videoIndex);
+  }
+}
+
+function advanceToNextSeriesVideo(currentVideoIndex) {
+  // For now, series_id data is not available in the current testimonials format
+  // Once series_id is added to the data model, this will advance to the next video
+  // with the same series_id
+  // Placeholder: no autoplay until series_id data is populated
+}
+
+function cleanupVideoPlayers() {
+  Object.values(panelState.videoPlayers).forEach(player => {
+    try {
+      if (player && player.destroy) {
+        player.destroy();
+      }
+    } catch (err) {
+      console.log('Error cleaning up video player:', err);
+    }
+  });
+  panelState.videoPlayers = {};
+}
+
+function renderHistoryPane() {
+  const contentEl = document.getElementById('panel-content');
+  contentEl.innerHTML = '';
+
+  if (panelState.contentIsEmpty) {
+    contentEl.innerHTML = '<div class="empty-state">No history available yet</div>';
+  } else if (panelState.city && panelState.city.content) {
+    contentEl.innerHTML = panelState.city.content;
+  }
+}
+
+function renderVideosPane() {
+  const testimonialsEl = document.getElementById('panel-testimonials');
+  testimonialsEl.innerHTML = '';
+
+  if (panelState.videosAreEmpty) {
+    testimonialsEl.innerHTML = '<div class="empty-state">No videos available yet</div>';
+  } else if (panelState.city && panelState.city.testimonials) {
+    const testimonials = panelState.city.testimonials;
+    testimonials.forEach((item, index) => {
+      const iframeHtml = typeof item === 'string' ? item : item.html;
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = iframeHtml;
+      testimonialsEl.appendChild(wrapper);
+    });
+  }
 }
 
 function openPanel(city) {
+  // Initialize panel state for this city
+  panelState = {
+    city: city,
+    cityId: city.id,
+    activeTab: 'history',
+    currentVideoIndex: 0,
+    currentSeriesId: null,
+    videoWasInteracted: false,
+    videoPlayers: {},
+    contentIsEmpty: isContentEmpty(city),
+    videosAreEmpty: areVideosEmpty(city),
+  };
+
   // Update active pin styling
   if (activePinId) {
     const prev = document.getElementById(`pin-${activePinId}`);
@@ -201,23 +415,9 @@ function openPanel(city) {
 
   document.getElementById('panel-name').textContent = city.name;
 
-  // Render encyclopedia content (HTML)
-  const contentEl = document.getElementById('panel-content');
-  if (city.content) {
-    contentEl.innerHTML = city.content;
-  } else {
-    contentEl.innerHTML = '';
-  }
-
-  // Render testimonials (raw iframe embeds)
-  const testimonialsEl = document.getElementById('panel-testimonials');
-  if (city.testimonials && city.testimonials.length > 0) {
-    testimonialsEl.innerHTML = city.testimonials
-      .map(iframe => `<div>${iframe}</div>`)
-      .join('');
-  } else {
-    testimonialsEl.innerHTML = '';
-  }
+  // Render both tabs (history tab shown, videos tab hidden but pre-rendered)
+  switchTab('history');
+  renderVideosPane();
 
   const sourceEl = document.getElementById('panel-source');
   sourceEl.textContent = city.source || '';
@@ -234,6 +434,9 @@ function openPanel(city) {
 }
 
 function closePanel() {
+  // Clean up video players before closing panel
+  cleanupVideoPlayers();
+
   document.getElementById('info-panel').classList.remove('visible');
   document.getElementById('map-overlay').classList.remove('active');
 

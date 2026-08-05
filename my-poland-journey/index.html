@@ -45,9 +45,17 @@
         <span id="panel-type-badge"></span>
         <h2 id="panel-name"></h2>
       </div>
+      <div class="tab-bar">
+        <button class="tab-button active" data-tab="history">History</button>
+        <button class="tab-button" data-tab="videos">Videos</button>
+      </div>
       <div id="panel-body">
-        <div id="panel-content"></div>
-        <div id="panel-testimonials"></div>
+        <div class="tab-pane" id="tab-history">
+          <div id="panel-content"></div>
+        </div>
+        <div class="tab-pane hidden" id="tab-videos">
+          <div id="panel-testimonials"></div>
+        </div>
       </div>
       <div id="panel-footer">
         <a id="panel-source" target="_blank" rel="noopener"></a>
