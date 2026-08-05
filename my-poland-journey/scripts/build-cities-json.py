@@ -24,13 +24,14 @@ from pathlib import Path
 
 def collect_source_files():
     """
-    Stage 1: Scan source directories and read all entry and testimonial files.
+    Stage 1: Scan source directories and read all entry and video files.
 
-    Returns a dict: { "city_slug": { "content": "...", "embeds": [...] } }
+    Returns a dict: { "city_slug": { "content": "...", "short_videos": [...], "full_testimonials": [...] } }
     """
     script_dir = Path(__file__).parent.parent  # my-poland-journey/
     entries_dir = script_dir / "data" / "city-entries"
-    testimonials_dir = script_dir / "data" / "testimonials"
+    short_videos_dir = script_dir / "data" / "short-videos"
+    full_testimonials_dir = script_dir / "data" / "full-testimonials"
 
     registry = {}
 
@@ -44,15 +45,31 @@ def collect_source_files():
             except Exception as e:
                 print(f"⚠ Skipping {html_file.name}: {e}")
 
-    # Scan testimonials
-    if testimonials_dir.exists():
-        for json_file in sorted(testimonials_dir.glob("*.json")):
+    # Scan short videos
+    if short_videos_dir.exists():
+        for json_file in sorted(short_videos_dir.glob("*.json")):
             slug = json_file.stem
             try:
                 data = json.loads(json_file.read_text(encoding="utf-8"))
                 embeds = data.get("embeds", [])
                 if isinstance(embeds, list):
-                    registry.setdefault(slug, {})["embeds"] = embeds
+                    registry.setdefault(slug, {})["short_videos"] = embeds
+                else:
+                    print(f"⚠ {json_file.name}: 'embeds' is not an array, skipping")
+            except json.JSONDecodeError as e:
+                print(f"⚠ Skipping {json_file.name}: invalid JSON ({e})")
+            except Exception as e:
+                print(f"⚠ Skipping {json_file.name}: {e}")
+
+    # Scan full testimonials
+    if full_testimonials_dir.exists():
+        for json_file in sorted(full_testimonials_dir.glob("*.json")):
+            slug = json_file.stem
+            try:
+                data = json.loads(json_file.read_text(encoding="utf-8"))
+                embeds = data.get("embeds", [])
+                if isinstance(embeds, list):
+                    registry.setdefault(slug, {})["full_testimonials"] = embeds
                 else:
                     print(f"⚠ {json_file.name}: 'embeds' is not an array, skipping")
             except json.JSONDecodeError as e:
@@ -97,8 +114,14 @@ def build_cities_json():
             source = registry[city_id]
             if "content" in source:
                 city["content"] = source["content"]
-            if "embeds" in source:
-                city["testimonials"] = source["embeds"]
+            if "short_videos" in source:
+                city["short_videos"] = source["short_videos"]
+            else:
+                city["short_videos"] = []
+            if "full_testimonials" in source:
+                city["full_testimonials"] = source["full_testimonials"]
+            else:
+                city["full_testimonials"] = []
             cities_updated += 1
 
     # Write atomically
@@ -115,10 +138,12 @@ def build_cities_json():
 
     # Log summary
     total_entries = len([s for s in registry.values() if "content" in s])
-    total_embeds = len([s for s in registry.values() if "embeds" in s])
+    total_short = len([s for s in registry.values() if "short_videos" in s and s["short_videos"]])
+    total_full = len([s for s in registry.values() if "full_testimonials" in s and s["full_testimonials"]])
     print(f"✓ {cities_updated} cities updated")
     print(f"  - {total_entries} city entries merged from data/city-entries/")
-    print(f"  - {total_embeds} testimonial files merged from data/testimonials/")
+    print(f"  - {total_short} short video collections merged from data/short-videos/")
+    print(f"  - {total_full} full testimonial collections merged from data/full-testimonials/")
     print(f"✓ Written to {cities_path}")
 
     return True

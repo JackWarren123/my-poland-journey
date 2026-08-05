@@ -44,6 +44,21 @@ let zoomGroup = null;
 let zoomTransform = { k: 1, x: 0, y: 0 };
 const ZOOM_FACTOR = 6; // how far a double-tap zooms in
 
+function getEmbedUrl(url) {
+  if (!url || typeof url !== 'string') return null;
+
+  // If it's an iframe, return null (pass through unchanged in rendering logic)
+  if (url.startsWith('<iframe')) return null;
+
+  const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^\#\&\?]*).*$/;
+  const match = url.match(regExp);
+
+  if (match && match[2].length === 11) {
+    return `https://www.youtube.com/embed/${match[2]}`;
+  }
+  return null;
+}
+
 function getMapDimensions() {
   return { width: window.innerWidth, height: window.innerHeight };
 }
@@ -203,11 +218,21 @@ function init() {
 }
 
 function isContentEmpty(city) {
-  return !city.content || city.content.trim() === '';
+  if (!city.content || city.content.trim() === '') {
+    return true;
+  }
+  // Remove HTML tags and comments to check if there's meaningful text
+  const textOnly = city.content
+    .replace(/<!--[\s\S]*?-->/g, '') // Remove comments
+    .replace(/<[^>]*>/g, '') // Remove tags
+    .trim();
+  return textOnly === '';
 }
 
 function areVideosEmpty(city) {
-  return !city.testimonials || city.testimonials.length === 0;
+  const shortVideos = !city.short_videos || city.short_videos.length === 0;
+  const fullTestimonials = !city.full_testimonials || city.full_testimonials.length === 0;
+  return shortVideos && fullTestimonials;
 }
 
 function setupTabHandlers() {
@@ -242,9 +267,13 @@ function switchTab(tabName) {
   // Render tab content when switching tabs
   if (tabName === 'history') {
     renderHistoryPane();
-  } else if (tabName === 'videos') {
-    renderVideosPane();
-    // Load YouTube API and attach autoplay listeners after videos are rendered
+  } else if (tabName === 'short-videos') {
+    renderVideosPane('short_videos');
+    loadYouTubeAPI().then(() => {
+      attachAutoplayListeners();
+    });
+  } else if (tabName === 'full-testimonials') {
+    renderVideosPane('full_testimonials');
     loadYouTubeAPI().then(() => {
       attachAutoplayListeners();
     });
@@ -360,26 +389,45 @@ function renderHistoryPane() {
   const contentEl = document.getElementById('panel-content');
   contentEl.innerHTML = '';
 
-  if (!panelState.city || !panelState.city.content || panelState.city.content.trim() === '') {
+  if (!panelState.city || isContentEmpty(panelState.city)) {
     contentEl.innerHTML = '<div class="empty-state">No history available yet</div>';
   } else {
     contentEl.innerHTML = panelState.city.content;
   }
 }
 
-function renderVideosPane() {
-  const testimonialsEl = document.getElementById('panel-testimonials');
+function renderVideosPane(category = 'short_videos') {
+  const elementId = category === 'short_videos' ? 'panel-short-videos' : 'panel-full-testimonials';
+  const testimonialsEl = document.getElementById(elementId);
   testimonialsEl.innerHTML = '';
 
-  if (!panelState.city || !panelState.city.testimonials || panelState.city.testimonials.length === 0) {
+  if (!panelState.city || !panelState.city[category] || panelState.city[category].length === 0) {
     testimonialsEl.innerHTML = '<div class="empty-state">No videos available yet</div>';
   } else {
-    const testimonials = panelState.city.testimonials;
-    testimonials.forEach((item, index) => {
-      const iframeHtml = typeof item === 'string' ? item : item.html;
-      const wrapper = document.createElement('div');
-      wrapper.innerHTML = iframeHtml;
-      testimonialsEl.appendChild(wrapper);
+    const videos = panelState.city[category];
+    videos.forEach((item, index) => {
+      let iframeHtml = null;
+
+      // Check if item is a regular YouTube link or an iframe
+      if (item.startsWith('<iframe')) {
+        // Pass through existing iframe unchanged
+        iframeHtml = item;
+      } else {
+        // Try to convert regular link to embed URL
+        const embedUrl = getEmbedUrl(item);
+        if (embedUrl) {
+          // Generate iframe with standard attributes matching existing embeds
+          iframeHtml = `<iframe width="560" height="315" src="${embedUrl}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`;
+        }
+        // If embedUrl is null (invalid link), iframeHtml stays null (graceful failure)
+      }
+
+      // Only append if we have valid HTML
+      if (iframeHtml) {
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = iframeHtml;
+        testimonialsEl.appendChild(wrapper);
+      }
     });
   }
 }
