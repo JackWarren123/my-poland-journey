@@ -163,12 +163,6 @@ html, body {
   margin-bottom: 6px;
 }
 
-#panel-hebrew {
-  font-size: 1.1rem;
-  color: #8a7f6f;
-  direction: rtl;
-  font-style: italic;
-}
 
 #panel-body {
   padding: 24px 28px;
@@ -187,11 +181,43 @@ html, body {
   border-radius: 2px;
 }
 
-#panel-summary {
+#panel-content {
   font-size: 0.9rem;
   line-height: 1.8;
   color: #4a4438;
-  font-style: italic;
+}
+
+#panel-content h2,
+#panel-content h3 {
+  font-family: Georgia, 'Times New Roman', serif;
+  color: #2a2520;
+  margin-top: 1.2em;
+  margin-bottom: 0.6em;
+  line-height: 1.4;
+}
+
+#panel-content h2:first-child,
+#panel-content h3:first-child {
+  margin-top: 0;
+}
+
+#panel-content p {
+  margin-bottom: 1em;
+}
+
+#panel-testimonials {
+  margin-top: 2em;
+  padding-top: 1.2em;
+  border-top: 1px solid #d4ccbc;
+}
+
+#panel-testimonials iframe {
+  display: block;
+  width: 100%;
+  height: 315px;
+  border: none;
+  border-radius: 2px;
+  margin-bottom: 1.5em;
 }
 
 #panel-footer {

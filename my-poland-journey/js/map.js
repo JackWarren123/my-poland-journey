@@ -60,6 +60,8 @@ function init() {
   // Layer order: modern fill → 1939 border on top → pins → labels
   const layerModern = zoomGroup.append('g').attr('class', 'layer-modern');
   const layerBorder = zoomGroup.append('g').attr('class', 'layer-border-1939');
+  // TEMPORARY: quadrilateral connecting the four main extermination camps
+  const layerQuad   = zoomGroup.append('g').attr('class', 'layer-quad');
   const layerPins   = zoomGroup.append('g').attr('class', 'layer-pins');
   const layerLabels = zoomGroup.append('g').attr('class', 'layer-labels');
 
@@ -108,6 +110,36 @@ function init() {
       .enter().append('path')
       .attr('d', path)
       .attr('class', 'modern-border');
+
+    // TEMPORARY: quadrilateral — Chełmno → Treblinka → Majdanek → Auschwitz
+    const quadVerts = [
+      [19.2016, 52.0594], // Chełmno
+      [22.05,   52.6333], // Treblinka
+      [22.6014, 51.2189], // Majdanek
+      [19.1783, 50.0341], // Auschwitz
+    ];
+    const quadPoints = quadVerts.map(([lng, lat]) => projection([lng, lat]).join(',')).join(' ');
+    layerQuad.append('polygon')
+      .attr('points', quadPoints)
+      .attr('fill', 'rgba(180, 40, 32, 0.08)')
+      .attr('stroke', '#b02820')
+      .attr('stroke-width', 1.5)
+      .attr('stroke-dasharray', '6,4');
+
+    // TEMPORARY: scaled-out version (1.3×) to include Bielsko-Biała, Kraków, Kutno, etc.
+    const centLat = 51.4864, centLng = 20.7578;
+    const scaledPoints = quadVerts.map(([lng, lat]) => {
+      const sLat = centLat + 1.3 * (lat - centLat);
+      const sLng = centLng + 1.3 * (lng - centLng);
+      return projection([sLng, sLat]).join(',');
+    }).join(' ');
+    layerQuad.append('polygon')
+      .attr('points', scaledPoints)
+      .attr('fill', 'none')
+      .attr('stroke', '#b02820')
+      .attr('stroke-width', 1)
+      .attr('stroke-dasharray', '3,5')
+      .attr('opacity', 0.5);
 
     // Draw city pins
     layerPins.selectAll('circle')
@@ -168,8 +200,24 @@ function openPanel(city) {
   badge.id = 'panel-type-badge';
 
   document.getElementById('panel-name').textContent = city.name;
-  document.getElementById('panel-hebrew').textContent = city.hebrew || '';
-  document.getElementById('panel-summary').textContent = city.summary || '';
+
+  // Render encyclopedia content (HTML)
+  const contentEl = document.getElementById('panel-content');
+  if (city.content) {
+    contentEl.innerHTML = city.content;
+  } else {
+    contentEl.innerHTML = '';
+  }
+
+  // Render testimonials (raw iframe embeds)
+  const testimonialsEl = document.getElementById('panel-testimonials');
+  if (city.testimonials && city.testimonials.length > 0) {
+    testimonialsEl.innerHTML = city.testimonials
+      .map(iframe => `<div>${iframe}</div>`)
+      .join('');
+  } else {
+    testimonialsEl.innerHTML = '';
+  }
 
   const sourceEl = document.getElementById('panel-source');
   sourceEl.textContent = city.source || '';
