@@ -120,7 +120,7 @@
         marksList = marksList.filter(
           (m) => !(m.kind === kind && m.youtube_id === youtubeId),
         );
-        if (kind === 'liked') adjustLikeCount(youtubeId, -1);
+        if (kind === 'starred') adjustLikeCount(youtubeId, -1);
         notify();
         return false;
       }
@@ -129,7 +129,7 @@
       if (error) throw error;
       marksKeys.add(key);
       marksList.unshift({ ...row, created_at: new Date().toISOString() });
-      if (kind === 'liked') adjustLikeCount(youtubeId, +1);
+      if (kind === 'starred') adjustLikeCount(youtubeId, +1);
       notify();
       return true;
     },

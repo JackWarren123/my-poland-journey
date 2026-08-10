@@ -14,19 +14,20 @@ const TYPE_LABELS = {
   synagogue: 'Synagogue',
 };
 
+const CONTENT_TYPE_LABELS = {
+  short_video: 'Short Video',
+  full_testimonial: 'Full Testimonial',
+  article: 'Article',
+};
+
+const CONTENT_TYPE_ORDER = ['article', 'short_video', 'full_testimonial'];
+
 let activePinId = null;
 
-// Tab panel state (transient; reset on every city selection)
 let panelState = {
-  city: null,
-  cityId: null,
-  activeTab: 'history',
-  currentVideoIndex: 0,
-  currentSeriesId: null,
-  videoWasInteracted: false,
-  videoPlayers: {},
-  contentIsEmpty: false,
-  videosAreEmpty: false,
+  open: false,
+  cityId: null,      // null = all content, string = filtered to city
+  detailItem: null,  // null = list view, item object = detail view
 };
 
 // YouTube IFrame API state
@@ -181,7 +182,7 @@ function init() {
       .attr('id', d => `pin-${d.id}`)
       .on('click', (event, d) => {
         event.stopPropagation();
-        openPanel(d);
+        openCityPanel(d);
       });
 
     // Draw city labels
@@ -202,9 +203,14 @@ function init() {
     closePanel();
     closeNearestPanel();
     closeAccountPanel();
-    closeContentPanel();
   });
-  document.getElementById('close-panel').addEventListener('click', closePanel);
+
+  document.getElementById('panel-close').addEventListener('click', closePanel);
+  document.getElementById('panel-back').addEventListener('click', () => {
+    panelState.detailItem = null;
+    renderPanelList();
+    document.getElementById('panel-back').classList.add('hidden');
+  });
 
   // Nearest-places feature
   document.getElementById('find-nearest-btn').addEventListener('click', enterSelectMode);
@@ -216,90 +222,205 @@ function init() {
   document.getElementById('account-btn').addEventListener('click', openAccountPanel);
   document.getElementById('close-account').addEventListener('click', closeAccountPanel);
 
-  // All Content panel
-  document.getElementById('all-content-btn').addEventListener('click', openContentPanel);
-  document.getElementById('close-content').addEventListener('click', closeContentPanel);
-  document.getElementById('refresh-content').addEventListener('click', shuffleContentPanel);
+  // All Content
+  document.getElementById('all-content-btn').addEventListener('click', openLibrary);
 
-  // Re-render account UI + video mark buttons whenever auth/marks change
-  // (fires on initial session load and on every sign-in/sign-out).
+  // Re-render account UI whenever auth/marks change.
   if (window.Account) {
     Account.onChange(() => {
       if (document.getElementById('account-panel').classList.contains('visible')) {
         renderAccountPanel();
       }
-      if (panelState.city &&
-          (panelState.activeTab === 'short-videos' || panelState.activeTab === 'full-testimonials')) {
-        renderVideosPane(panelState.activeTab === 'short-videos' ? 'short_video' : 'full_testimonial');
+    });
+  }
+}
+
+// ---- Unified panel ----
+
+function openCityPanel(city) {
+  closeAccountPanel();
+  if (activePinId) {
+    const prev = document.getElementById(`pin-${activePinId}`);
+    if (prev) prev.classList.remove('active');
+  }
+  activePinId = city.id;
+  const pin = document.getElementById(`pin-${city.id}`);
+  if (pin) pin.classList.add('active');
+
+  panelState = { open: true, cityId: city.id, detailItem: null };
+  document.getElementById('panel-title').textContent = city.name;
+  document.getElementById('panel-back').classList.add('hidden');
+  renderPanelList();
+  document.getElementById('panel').classList.add('visible');
+  document.getElementById('map-overlay').classList.add('active');
+}
+
+function openLibrary() {
+  closeAccountPanel();
+  if (activePinId) {
+    const prev = document.getElementById(`pin-${activePinId}`);
+    if (prev) prev.classList.remove('active');
+    activePinId = null;
+  }
+  panelState = { open: true, cityId: null, detailItem: null };
+  document.getElementById('panel-title').textContent = 'All Content';
+  document.getElementById('panel-back').classList.add('hidden');
+  renderPanelList();
+  document.getElementById('panel').classList.add('visible');
+  document.getElementById('map-overlay').classList.add('active');
+}
+
+function closePanel() {
+  panelState = { open: false, cityId: null, detailItem: null };
+  document.getElementById('panel').classList.remove('visible');
+  document.getElementById('map-overlay').classList.remove('active');
+  if (activePinId) {
+    const pin = document.getElementById(`pin-${activePinId}`);
+    if (pin) pin.classList.remove('active');
+    activePinId = null;
+  }
+}
+
+function renderPanelList() {
+  const listEl = document.getElementById('panel-list');
+  const detailEl = document.getElementById('panel-detail');
+  listEl.innerHTML = '';
+  listEl.classList.remove('hidden');
+  detailEl.classList.add('hidden');
+
+  let items;
+  if (panelState.cityId) {
+    items = [...(contentByCity[panelState.cityId] || [])].sort((a, b) =>
+      CONTENT_TYPE_ORDER.indexOf(a.content_type) - CONTENT_TYPE_ORDER.indexOf(b.content_type)
+    );
+  } else {
+    const articles = contentData.filter(i => i.content_type === 'article');
+    const videos = contentData.filter(i => i.content_type !== 'article').sort(() => Math.random() - 0.5);
+    items = [...articles, ...videos];
+  }
+
+  if (items.length === 0) {
+    listEl.innerHTML = '<div class="empty-state">No content for this city yet.</div>';
+    return;
+  }
+
+  items.forEach((item) => {
+    const btn = document.createElement('button');
+    btn.className = 'panel-list-item';
+    btn.addEventListener('click', () => renderPanelDetail(item));
+
+    if (item.youtube_id) {
+      const thumb = document.createElement('img');
+      thumb.className = 'panel-item-thumb';
+      thumb.src = `https://img.youtube.com/vi/${item.youtube_id}/mqdefault.jpg`;
+      thumb.alt = '';
+      btn.appendChild(thumb);
+    } else {
+      const icon = document.createElement('div');
+      icon.className = 'panel-item-thumb panel-item-article-icon';
+      icon.textContent = '📖';
+      btn.appendChild(icon);
+    }
+
+    const info = document.createElement('div');
+    info.className = 'panel-item-info';
+
+    const titleEl = document.createElement('div');
+    titleEl.className = 'panel-item-title';
+    titleEl.textContent = item.title || 'Untitled';
+    info.appendChild(titleEl);
+
+    const metaParts = [];
+    if (item.author) metaParts.push(item.author);
+    metaParts.push(CONTENT_TYPE_LABELS[item.content_type] || item.content_type);
+    if (item.runtime) metaParts.push(item.runtime);
+    if (!panelState.cityId && item.places && item.places.length) {
+      const names = item.places.map(id => {
+        const c = citiesData.find(x => x.id === id);
+        return c ? c.name : id;
+      }).join(', ');
+      metaParts.push(names);
+    }
+
+    const metaEl = document.createElement('div');
+    metaEl.className = 'panel-item-meta';
+    metaEl.textContent = metaParts.join(' · ');
+    info.appendChild(metaEl);
+
+    btn.appendChild(info);
+    listEl.appendChild(btn);
+  });
+}
+
+function renderPanelDetail(item) {
+  panelState.detailItem = item;
+
+  const listEl = document.getElementById('panel-list');
+  const detailEl = document.getElementById('panel-detail');
+  const detailBody = document.getElementById('panel-detail-body');
+
+  listEl.classList.add('hidden');
+  detailEl.classList.remove('hidden');
+  document.getElementById('panel-back').classList.remove('hidden');
+  detailEl.scrollTop = 0;
+  detailBody.innerHTML = '';
+
+  if (item.content_type === 'article') {
+    const article = document.createElement('div');
+    article.className = 'panel-article';
+    article.innerHTML = item.body || '<p>Content coming soon.</p>';
+    detailBody.appendChild(article);
+  } else if (item.youtube_id) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'video-item';
+
+    const iframeHtml = `<iframe width="560" height="315" src="https://www.youtube.com/embed/${item.youtube_id}" title="${item.title || 'YouTube video'}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`;
+
+    const facade = document.createElement('div');
+    facade.className = 'video-facade';
+    facade.innerHTML = `<img class="video-thumb" src="https://img.youtube.com/vi/${item.youtube_id}/hqdefault.jpg" alt="${item.title || 'YouTube video'}"><div class="play-overlay"><div class="play-btn">&#9654;</div></div>`;
+    facade.addEventListener('click', () => {
+      const temp = document.createElement('div');
+      temp.innerHTML = iframeHtml;
+      wrapper.replaceChild(temp.firstChild, facade);
+    });
+    wrapper.appendChild(facade);
+
+    if (item.title || item.author || item.runtime) {
+      const meta = document.createElement('div');
+      meta.className = 'video-meta';
+      if (item.title) {
+        const t = document.createElement('div');
+        t.className = 'video-title';
+        t.textContent = item.title;
+        meta.appendChild(t);
       }
-    });
-  }
-
-  // Set up tab click handlers
-  setupTabHandlers();
-}
-
-function isContentEmpty(city) {
-  if (!city.content || city.content.trim() === '') {
-    return true;
-  }
-  // Remove HTML tags and comments to check if there's meaningful text
-  const textOnly = city.content
-    .replace(/<!--[\s\S]*?-->/g, '') // Remove comments
-    .replace(/<[^>]*>/g, '') // Remove tags
-    .trim();
-  return textOnly === '';
-}
-
-function areVideosEmpty(city) {
-  const items = contentByCity[city.id] || [];
-  return !items.some((i) => i.content_type === 'short_video' || i.content_type === 'full_testimonial');
-}
-
-function setupTabHandlers() {
-  const tabButtons = document.querySelectorAll('.tab-button');
-  tabButtons.forEach(button => {
-    button.addEventListener('click', () => {
-      const tab = button.getAttribute('data-tab');
-      switchTab(tab);
-    });
-  });
-}
-
-function switchTab(tabName) {
-  panelState.activeTab = tabName;
-
-  const tabButtons = document.querySelectorAll('.tab-button');
-  tabButtons.forEach(btn => {
-    btn.classList.remove('active');
-    if (btn.getAttribute('data-tab') === tabName) {
-      btn.classList.add('active');
+      const details = [];
+      if (item.author) details.push(item.author);
+      if (item.runtime) details.push(item.runtime);
+      if (details.length) {
+        const d = document.createElement('div');
+        d.className = 'video-detail';
+        d.textContent = details.join(' · ');
+        meta.appendChild(d);
+      }
+      wrapper.appendChild(meta);
     }
-  });
 
-  const tabPanes = document.querySelectorAll('.tab-pane');
-  tabPanes.forEach(pane => {
-    pane.classList.add('hidden');
-    if (pane.id === `tab-${tabName}`) {
-      pane.classList.remove('hidden');
+    const cityId = (item.places || [])[0];
+    if (window.Account) {
+      const actions = document.createElement('div');
+      actions.className = 'video-actions';
+      actions.appendChild(makeMarkButton('starred', item.youtube_id, cityId));
+      actions.appendChild(makeMarkButton('watch_later', item.youtube_id, cityId));
+      wrapper.appendChild(actions);
     }
-  });
 
-  // Render tab content when switching tabs
-  if (tabName === 'history') {
-    renderHistoryPane();
-  } else if (tabName === 'short-videos') {
-    renderVideosPane('short_video');
-    loadYouTubeAPI().then(() => {
-      attachAutoplayListeners();
-    });
-  } else if (tabName === 'full-testimonials') {
-    renderVideosPane('full_testimonial');
-    loadYouTubeAPI().then(() => {
-      attachAutoplayListeners();
-    });
+    detailBody.appendChild(wrapper);
   }
 }
+
+// ---- YouTube helpers ----
 
 function loadYouTubeAPI() {
   return new Promise((resolve) => {
@@ -314,59 +435,20 @@ function loadYouTubeAPI() {
       return;
     }
 
-    // Load YouTube API script
     const tag = document.createElement('script');
     tag.src = 'https://www.youtube.com/iframe_api';
     const firstScriptTag = document.getElementsByTagName('script')[0];
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-    // Set callback for when API is ready
     window.onYouTubeIframeAPIReady = () => {
       youtubeAPIReady = true;
       resolve();
     };
 
-    // Timeout in case API fails to load
     setTimeout(() => {
       youtubeAPIReady = true;
       resolve();
     }, 5000);
-  });
-}
-
-function attachAutoplayListeners() {
-  if (!youtubeAPIReady || !window.YT || !window.YT.Player) {
-    console.log('YouTube API not ready, autoplay disabled');
-    return;
-  }
-
-  const iframes = document.querySelectorAll('#tab-videos iframe');
-  const players = {};
-
-  iframes.forEach((iframe, index) => {
-    const videoId = extractYouTubeVideoId(iframe.src);
-    if (!videoId) return;
-
-    try {
-      const player = new YT.Player(iframe, {
-        events: {
-          onStateChange: (event) => onVideoStateChange(event, index),
-          onError: (event) => console.log('YouTube player error:', event),
-        },
-      });
-      players[index] = player;
-    } catch (err) {
-      console.log('Could not create YouTube player for iframe', index, err);
-    }
-  });
-
-  panelState.videoPlayers = players;
-
-  // Attach user interaction listeners
-  iframes.forEach((iframe, index) => {
-    iframe.addEventListener('click', () => {
-      panelState.videoWasInteracted = true;
-    });
   });
 }
 
@@ -375,121 +457,12 @@ function extractYouTubeVideoId(url) {
   return match ? match[1] : null;
 }
 
-function onVideoStateChange(event, videoIndex) {
-  // 0 = UNSTARTED, 1 = ENDED, 2 = PLAYING, 3 = PAUSED, 5 = CUED
-  if (event.data === 0) {
-    // Video unstarted - reset interaction flag
-    panelState.videoWasInteracted = false;
-  } else if (event.data === 1) {
-    // Video ended - advance to next video in series if applicable
-    advanceToNextSeriesVideo(videoIndex);
-  }
-}
+// ---- Mark buttons ----
 
-function advanceToNextSeriesVideo(currentVideoIndex) {
-  // For now, series_id data is not available in the current testimonials format
-  // Once series_id is added to the data model, this will advance to the next video
-  // with the same series_id
-  // Placeholder: no autoplay until series_id data is populated
-}
-
-function cleanupVideoPlayers() {
-  Object.values(panelState.videoPlayers).forEach(player => {
-    try {
-      if (player && player.destroy) {
-        player.destroy();
-      }
-    } catch (err) {
-      console.log('Error cleaning up video player:', err);
-    }
-  });
-  panelState.videoPlayers = {};
-}
-
-function renderHistoryPane() {
-  const contentEl = document.getElementById('panel-content');
-  contentEl.innerHTML = '';
-
-  if (!panelState.city || isContentEmpty(panelState.city)) {
-    contentEl.innerHTML = '<div class="empty-state">No history available yet</div>';
-  } else {
-    contentEl.innerHTML = panelState.city.content;
-  }
-}
-
-function renderVideosPane(contentType = 'short_video') {
-  const elementId = contentType === 'short_video' ? 'panel-short-videos' : 'panel-full-testimonials';
-  const container = document.getElementById(elementId);
-  container.innerHTML = '';
-
-  const cityItems = (contentByCity[panelState.cityId] || [])
-    .filter((item) => item.content_type === contentType);
-
-  if (cityItems.length === 0) {
-    container.innerHTML = '<div class="empty-state">No videos available yet</div>';
-    return;
-  }
-
-  cityItems.forEach((item) => {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'video-item';
-
-    const ytId = item.youtube_id;
-    if (ytId) {
-      const iframeHtml = `<iframe width="560" height="315" src="https://www.youtube.com/embed/${ytId}" title="${item.title || 'YouTube video'}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`;
-
-      // Thumbnail facade: show a clickable poster image and only load the
-      // iframe when the user clicks play, avoiding YouTube's heavy JS upfront.
-      const facade = document.createElement('div');
-      facade.className = 'video-facade';
-      facade.innerHTML = `<img class="video-thumb" src="https://img.youtube.com/vi/${ytId}/hqdefault.jpg" alt="${item.title || 'YouTube video'}"><div class="play-overlay"><div class="play-btn">&#9654;</div></div>`;
-      facade.addEventListener('click', () => {
-        const temp = document.createElement('div');
-        temp.innerHTML = iframeHtml;
-        wrapper.replaceChild(temp.firstChild, facade);
-      });
-      wrapper.appendChild(facade);
-    }
-
-    // Metadata row (shown when title or author is filled in)
-    if (item.title || item.author || item.runtime) {
-      const meta = document.createElement('div');
-      meta.className = 'video-meta';
-      if (item.title) {
-        const titleEl = document.createElement('div');
-        titleEl.className = 'video-title';
-        titleEl.textContent = item.title;
-        meta.appendChild(titleEl);
-      }
-      const details = [];
-      if (item.author) details.push(item.author);
-      if (item.runtime) details.push(item.runtime);
-      if (details.length) {
-        const detailEl = document.createElement('div');
-        detailEl.className = 'video-detail';
-        detailEl.textContent = details.join(' · ');
-        meta.appendChild(detailEl);
-      }
-      wrapper.appendChild(meta);
-    }
-
-    // Like / watch-later actions
-    if (ytId && window.Account) {
-      const actions = document.createElement('div');
-      actions.className = 'video-actions';
-      actions.appendChild(makeMarkButton('liked', ytId, panelState.cityId));
-      actions.appendChild(makeMarkButton('watch_later', ytId, panelState.cityId));
-      wrapper.appendChild(actions);
-    }
-
-    container.appendChild(wrapper);
-  });
-}
-
-// Build a toggle button for a video mark ('liked' or 'watch_later').
-// The 'liked' button also shows the public like count.
+// Build a toggle button for a video mark ('starred' or 'watch_later').
+// The 'starred' (like) button also shows the public like count.
 function makeMarkButton(kind, ytId, cityId) {
-  const isLike = kind === 'liked';
+  const isLike = kind === 'starred';
   const meta = isLike
     ? { icon: '♥', label: 'Like' }
     : { icon: '◷', label: 'Watch later' };
@@ -527,70 +500,7 @@ function makeMarkButton(kind, ytId, cityId) {
   return btn;
 }
 
-function openPanel(city) {
-  // Initialize panel state for this city
-  panelState = {
-    city: city,
-    cityId: city.id,
-    activeTab: 'history',
-    currentVideoIndex: 0,
-    currentSeriesId: null,
-    videoWasInteracted: false,
-    videoPlayers: {},
-    contentIsEmpty: isContentEmpty(city),
-    videosAreEmpty: areVideosEmpty(city),
-  };
-
-  // Update active pin styling
-  if (activePinId) {
-    const prev = document.getElementById(`pin-${activePinId}`);
-    if (prev) prev.classList.remove('active');
-  }
-  activePinId = city.id;
-  const pin = document.getElementById(`pin-${city.id}`);
-  if (pin) pin.classList.add('active');
-
-  // Populate panel content
-  const badge = document.getElementById('panel-type-badge');
-  badge.textContent = TYPE_LABELS[city.type] || city.type;
-  badge.className = `badge-${city.type}`;
-  badge.id = 'panel-type-badge';
-
-  document.getElementById('panel-name').textContent = city.name;
-
-  // Pre-render all three tab panes; history is shown first, video tabs are
-  // hidden but their thumbnail facades are ready so switching is instant.
-  switchTab('history');
-  renderVideosPane('short_video');
-  renderVideosPane('full_testimonial');
-
-  const sourceEl = document.getElementById('panel-source');
-  sourceEl.textContent = city.source || '';
-  if (city.source_url) {
-    sourceEl.href = city.source_url;
-    sourceEl.style.pointerEvents = 'auto';
-  } else {
-    sourceEl.removeAttribute('href');
-    sourceEl.style.pointerEvents = 'none';
-  }
-
-  document.getElementById('info-panel').classList.add('visible');
-  document.getElementById('map-overlay').classList.add('active');
-}
-
-function closePanel() {
-  // Clean up video players before closing panel
-  cleanupVideoPlayers();
-
-  document.getElementById('info-panel').classList.remove('visible');
-  document.getElementById('map-overlay').classList.remove('active');
-
-  if (activePinId) {
-    const pin = document.getElementById(`pin-${activePinId}`);
-    if (pin) pin.classList.remove('active');
-    activePinId = null;
-  }
-}
+// ---- Account panel ----
 
 function openAccountPanel() {
   renderAccountPanel();
@@ -603,8 +513,7 @@ function closeAccountPanel() {
   document.getElementById('map-overlay').classList.remove('active');
 }
 
-// Which mark list is currently shown in the account panel.
-let accountActiveKind = 'liked';
+let accountActiveKind = 'starred';
 
 function renderAccountPanel() {
   const body = document.getElementById('account-body');
@@ -640,7 +549,7 @@ function renderAccountPanel() {
     '</div>' +
     '<div id="account-list-view"></div>' +
     '<div class="account-lists">' +
-    `<button class="account-list-btn ${accountActiveKind === 'liked' ? 'active' : ''}" data-kind="liked">♥ Liked</button>` +
+    `<button class="account-list-btn ${accountActiveKind === 'starred' ? 'active' : ''}" data-kind="starred">♥ Liked</button>` +
     `<button class="account-list-btn ${accountActiveKind === 'watch_later' ? 'active' : ''}" data-kind="watch_later">◷ Watch Later</button>` +
     '</div>';
 
@@ -663,7 +572,7 @@ function renderAccountList(kind) {
 
   const marks = Account.getMarks(kind);
   if (marks.length === 0) {
-    const msg = kind === 'liked'
+    const msg = kind === 'starred'
       ? 'No liked videos yet. Tap ♥ on any video to like it.'
       : 'Nothing saved yet. Tap ◷ on any video to watch it later.';
     view.innerHTML = `<div class="empty-state">${msg}</div>`;
@@ -682,123 +591,22 @@ function renderAccountList(kind) {
     btn.innerHTML =
       `<img class="account-video-thumb" src="https://img.youtube.com/vi/${mark.youtube_id}/mqdefault.jpg" alt="">` +
       `<span class="account-video-city">${city ? city.name : mark.city_id}${titleLine}</span>`;
-    btn.addEventListener('click', () => openMarkedVideo(mark.city_id, mark.youtube_id));
+    btn.addEventListener('click', () => openAccountVideo(mark.city_id, mark.youtube_id));
     view.appendChild(btn);
   });
 }
 
-// Open a city's panel from the account list and jump to the video's tab.
-function openMarkedVideo(cityId, ytId) {
+function openAccountVideo(cityId, ytId) {
   const city = citiesData.find((c) => c.id === cityId);
   if (!city) return;
   closeAccountPanel();
-  openPanel(city);
-
+  openCityPanel(city);
   const contentItem = (contentByCity[cityId] || []).find((c) => c.youtube_id === ytId);
-  if (contentItem) {
-    if (contentItem.content_type === 'short_video') switchTab('short-videos');
-    else if (contentItem.content_type === 'full_testimonial') switchTab('full-testimonials');
-  }
-}
-
-// ---- All Content panel ----
-
-const CONTENT_TYPE_LABELS = {
-  short_video: 'Short Video',
-  full_testimonial: 'Full Testimonial',
-  article: 'Article',
-};
-
-let contentPanelOrder = [];   // shuffled copy of contentData
-
-function openContentPanel() {
-  closePanel();
-  closeAccountPanel();
-  shuffleContentPanel();
-  document.getElementById('content-panel').classList.add('visible');
-  document.getElementById('map-overlay').classList.add('active');
-}
-
-function closeContentPanel() {
-  document.getElementById('content-panel').classList.remove('visible');
-  document.getElementById('map-overlay').classList.remove('active');
-}
-
-function shuffleContentPanel() {
-  contentPanelOrder = [...contentData].sort(() => Math.random() - 0.5);
-  renderContentPanel();
-}
-
-function renderContentPanel() {
-  const list = document.getElementById('content-list');
-  list.innerHTML = '';
-
-  if (contentPanelOrder.length === 0) {
-    list.innerHTML = '<div class="empty-state">No content yet.</div>';
-    return;
-  }
-
-  contentPanelOrder.forEach((item) => {
-    const btn = document.createElement('button');
-    btn.className = 'content-item';
-    btn.addEventListener('click', () => openContentItem(item));
-
-    // Thumbnail or article icon
-    if (item.youtube_id) {
-      const thumb = document.createElement('img');
-      thumb.className = 'content-item-thumb';
-      thumb.src = `https://img.youtube.com/vi/${item.youtube_id}/mqdefault.jpg`;
-      thumb.alt = '';
-      btn.appendChild(thumb);
-    } else {
-      const icon = document.createElement('div');
-      icon.className = 'content-item-thumb content-item-article-icon';
-      icon.textContent = '📄';
-      btn.appendChild(icon);
-    }
-
-    // Info column
-    const info = document.createElement('div');
-    info.className = 'content-item-info';
-
-    const title = document.createElement('div');
-    title.className = 'content-item-title';
-    title.textContent = item.title || 'Untitled';
-    info.appendChild(title);
-
-    const metaParts = [];
-    if (item.author) metaParts.push(item.author);
-    metaParts.push(CONTENT_TYPE_LABELS[item.content_type] || item.content_type);
-    if (item.runtime) metaParts.push(item.runtime);
-    const likeCount = window.Account ? Account.getLikeCount(item.youtube_id) : 0;
-    if (likeCount > 0) metaParts.push(`♥ ${likeCount}`);
-
-    const meta = document.createElement('div');
-    meta.className = 'content-item-meta';
-    meta.textContent = metaParts.join(' · ');
-    info.appendChild(meta);
-
-    btn.appendChild(info);
-    list.appendChild(btn);
-  });
-}
-
-// Open the relevant city panel when the user clicks a content item.
-function openContentItem(item) {
-  const cityId = (item.places || [])[0];
-  if (!cityId) return;
-  const city = citiesData.find((c) => c.id === cityId);
-  if (!city) return;
-  closeContentPanel();
-  openPanel(city);
-  if (item.content_type === 'short_video') switchTab('short-videos');
-  else if (item.content_type === 'full_testimonial') switchTab('full-testimonials');
-  // articles stay on the default 'history' tab
+  if (contentItem) renderPanelDetail(contentItem);
 }
 
 // ---- Double-tap zoom ----
 
-// Zoom in by ZOOM_FACTOR, centering the tapped point (x, y in svg pixels).
 function zoomToPoint(x, y) {
   if (!zoomGroup) return;
   const { width, height } = getMapDimensions();
@@ -811,8 +619,6 @@ function resetZoom() {
   applyZoom(1, 0, 0);
 }
 
-// Set the zoom/pan transform. Double-tap zoom animates; drag panning passes
-// animate=false so each move applies instantly without queuing transitions.
 function applyZoom(k, x, y, animate = true) {
   zoomTransform = { k, x, y };
   document.body.classList.toggle('map-zoomed', k > 1);
@@ -822,8 +628,6 @@ function applyZoom(k, x, y, animate = true) {
   target.attr('transform', `translate(${x}, ${y}) scale(${k})`);
 }
 
-// Constrain a pan translation so the (full-bleed) map keeps covering the
-// viewport at scale k — i.e. translate stays within [width*(1-k), 0] on each axis.
 function clampPan(k, x, y) {
   const { width, height } = getMapDimensions();
   return {
@@ -835,7 +639,6 @@ function clampPan(k, x, y) {
 // ---- Nearest places ----
 
 function enterSelectMode() {
-  // Clear any open panels so the map is unobstructed.
   closePanel();
   closeNearestPanel();
   selectMode = true;
@@ -847,8 +650,6 @@ function exitSelectMode() {
   document.body.classList.remove('select-mode');
 }
 
-// Capture-phase handler on #map. Only acts while in select mode, then converts
-// the click's pixel position back to lng/lat via the projection.
 function handleMapSelectClick(event) {
   if (!selectMode || !projection) return;
   event.preventDefault();
@@ -858,7 +659,6 @@ function handleMapSelectClick(event) {
   const rect = svg.getBoundingClientRect();
   const x = event.clientX - rect.left;
   const y = event.clientY - rect.top;
-  // Undo the current zoom transform before inverting the projection.
   const mapX = (x - zoomTransform.x) / zoomTransform.k;
   const mapY = (y - zoomTransform.y) / zoomTransform.k;
   const [lng, lat] = projection.invert([mapX, mapY]);
@@ -868,9 +668,8 @@ function handleMapSelectClick(event) {
   openNearestPanel(results);
 }
 
-// Great-circle distance in km between two lat/lng points.
 function haversineKm(lat1, lng1, lat2, lng2) {
-  const R = 6371; // Earth radius, km
+  const R = 6371;
   const toRad = (d) => (d * Math.PI) / 180;
   const dLat = toRad(lat2 - lat1);
   const dLng = toRad(lng2 - lng1);
@@ -880,7 +679,6 @@ function haversineKm(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-// Returns the n nearest cities (that have coordinates) with a `distanceKm` field.
 function getNearestPlaces(lat, lng, n = 5) {
   return citiesData
     .filter((c) => c.lat != null && c.lng != null)
@@ -917,7 +715,6 @@ function closeNearestPanel() {
   document.getElementById('map-overlay').classList.remove('active');
 }
 
-// Handle window resize
 window.addEventListener('resize', () => {
   document.getElementById('map').innerHTML = '';
   init();

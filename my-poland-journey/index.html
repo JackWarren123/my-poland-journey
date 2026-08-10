@@ -4,7 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Poland Journey</title>
-  <link rel="stylesheet" href="css/style.css?v=8">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#7a6e5e">
+  <link rel="apple-touch-icon" href="assets/icon-180.png">
+  <link rel="stylesheet" href="css/style.css?v=10">
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -13,21 +16,19 @@
 
     <div id="header">
       <h1>My Poland Journey</h1>
-      <p>Jewish Life and the Holocaust — Click a city to learn its history</p>
+      <p>Jewish Life and the Holocaust — Click a city to explore its content</p>
     </div>
 
     <!-- Map controls -->
     <div id="controls">
       <button id="find-nearest-btn">Find Nearest Places</button>
+      <button id="all-content-btn">All Content</button>
     </div>
 
     <!-- Account button -->
     <button id="account-btn" aria-label="Account">
       <img src="assets/profile-circle.svg" alt="Account" class="account-icon">
     </button>
-
-    <!-- All Content button -->
-    <button id="all-content-btn" aria-label="Browse all content">All Content</button>
 
     <!-- Hint shown while in select mode -->
     <div id="select-hint">Click anywhere on the map to find the 5 nearest places</div>
@@ -47,16 +48,6 @@
       <ul id="nearest-list"></ul>
     </div>
 
-    <!-- All Content panel -->
-    <div id="content-panel">
-      <div id="content-header">
-        <button id="close-content" aria-label="Close">×</button>
-        <h2>All Content</h2>
-        <button id="refresh-content" aria-label="Refresh" title="Shuffle content">⟳</button>
-      </div>
-      <div id="content-list"></div>
-    </div>
-
     <!-- Account panel -->
     <div id="account-panel">
       <div id="account-header">
@@ -66,31 +57,16 @@
       <div id="account-body"></div>
     </div>
 
-    <!-- Info panel -->
-    <div id="info-panel">
+    <!-- Unified content panel (right side) -->
+    <div id="panel">
       <div id="panel-header">
-        <button id="close-panel" aria-label="Close">×</button>
-        <span id="panel-type-badge"></span>
-        <h2 id="panel-name"></h2>
+        <button id="panel-back" class="hidden" aria-label="Back">←</button>
+        <h2 id="panel-title"></h2>
+        <button id="panel-close" aria-label="Close">×</button>
       </div>
-      <div class="tab-bar">
-        <button class="tab-button active" data-tab="history">History</button>
-        <button class="tab-button" data-tab="short-videos">Short Videos</button>
-        <button class="tab-button" data-tab="full-testimonials">Full Testimonials</button>
-      </div>
-      <div id="panel-body">
-        <div class="tab-pane" id="tab-history">
-          <div id="panel-content"></div>
-        </div>
-        <div class="tab-pane hidden" id="tab-short-videos">
-          <div id="panel-short-videos"></div>
-        </div>
-        <div class="tab-pane hidden" id="tab-full-testimonials">
-          <div id="panel-full-testimonials"></div>
-        </div>
-      </div>
-      <div id="panel-footer">
-        <a id="panel-source" target="_blank" rel="noopener"></a>
+      <div id="panel-list"></div>
+      <div id="panel-detail" class="hidden">
+        <div id="panel-detail-body"></div>
       </div>
     </div>
 
@@ -104,7 +80,12 @@
     </div>
 
   </div>
-  <script src="js/auth.js?v=8"></script>
-  <script src="js/map.js?v=8"></script>
+  <script src="js/auth.js?v=10"></script>
+  <script src="js/map.js?v=10"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js');
+    }
+  </script>
 </body>
 </html>

@@ -492,18 +492,6 @@
     "content_type": "short_video"
   },
   {
-    "id": "lodz_kVMsDl7nRus",
-    "title": "",
-    "author": "",
-    "form": "video",
-    "runtime": "",
-    "youtube_id": "kVMsDl7nRus",
-    "places": [
-      "lodz"
-    ],
-    "content_type": "short_video"
-  },
-  {
     "id": "lodz_nnkKBb6C_yQ",
     "title": "",
     "author": "",
@@ -1633,38 +1621,41 @@
   },
   {
     "id": "warsaw_article",
-    "title": "Warsaw",
-    "author": "",
+    "title": "Brief History of Warsaw",
+    "author": "My Poland Journey",
     "form": "article",
     "runtime": null,
     "youtube_id": null,
     "places": [
       "warsaw"
     ],
-    "content_type": "article"
+    "content_type": "article",
+    "body": "<h2>Warsaw</h2>\n<p>Warsaw was the capital of Poland and the undisputed center of Jewish life in Europe during the twentieth century. Before World War II, more than 375,000 Jews lived in Warsaw, making it the largest Jewish city in the world—larger even than New York's Jewish population at the time. The city was a vibrant hub of Yiddish culture, literature, theater, and political movements that shaped Jewish modernity.</p>\n\n<h3>Medieval Origins and Development</h3>\n<p>Jews first settled in Warsaw during the medieval period, but the community remained small until the eighteenth century. Following the partitions of Poland, Warsaw came under Russian rule, and the Jewish population began to grow substantially. By the nineteenth century, Warsaw's Jews had established themselves as merchants, artisans, and professionals, creating a thriving community with schools, synagogues, and cultural institutions.</p>\n\n<h3>The Golden Age: 1900–1939</h3>\n<p>The early twentieth century saw Warsaw's Jewish community reach its cultural and intellectual peak. The city became a center of the Jewish Enlightenment (Haskalah), socialist movements, Bundism, and Zionism. Yiddish writers, poets, and journalists made Warsaw their home. The community supported hundreds of synagogues, schools, theaters, and libraries. Jewish Warsaw was a microcosm of the full spectrum of Jewish modernity: from ultra-Orthodox Hasidic dynasties to radical leftist activists.</p>\n\n<h3>The Holocaust: The Warsaw Ghetto</h3>\n<p>Following the Nazi invasion of Poland in September 1939, Warsaw's Jews faced systematic persecution. In October 1940, the Nazis sealed a ghetto in Warsaw's northern districts, eventually confining over 400,000 Jews behind walls and barbed wire. Conditions were catastrophic: starvation, disease, and cold claimed thousands monthly. Between July and September 1942, Nazi deportations sent over 300,000 Warsaw Jews to Treblinka extermination camp.</p>\n\n<h3>The Warsaw Ghetto Uprising</h3>\n<p>In April 1943, when Nazi liquidation of the ghetto began anew, the remaining 40,000 Jews rose in armed rebellion. The Warsaw Ghetto Uprising became the largest Jewish armed resistance during the Holocaust. For nearly a month, Jewish fighters with smuggled weapons battled the Wehrmacht and SS. Though ultimately crushed, the uprising became a symbol of Jewish defiance and dignity in the face of annihilation. By May 1943, the Warsaw Ghetto was destroyed, and most of its remaining inhabitants were dead.</p>\n\n<h3>Legacy</h3>\n<p>Warsaw's prewar Jewish community was nearly completely annihilated. An estimated 90% of Warsaw's Jews perished during the Holocaust. Today, the city preserves the memory of this lost world through museums, monuments, and the remnants of the ghetto walls that still stand as witnesses to history.</p>"
   },
   {
     "id": "krakow_article",
-    "title": "Kraków",
-    "author": "",
+    "title": "Brief History of Kraków",
+    "author": "My Poland Journey",
     "form": "article",
     "runtime": null,
     "youtube_id": null,
     "places": [
       "krakow"
     ],
-    "content_type": "article"
+    "content_type": "article",
+    "body": "<h2>Kraków</h2>\n<p>Kraków, the ancient capital of Poland, was home to one of the oldest and most prestigious Jewish communities in Central Europe. For nearly seven centuries, Jews lived and flourished in this Renaissance city on the Vistula River, establishing institutions of learning, commerce, and culture that influenced Jewish life across the continent.</p>\n\n<h3>Medieval Foundations: 1264 Onward</h3>\n<p>Jews first settled in Kraków in the thirteenth century, with formal privileges granted in 1264. The community grew steadily despite periodic persecutions and expulsions. By the fifteenth century, Kraków's Jews had established a separate quarter (Kazimierz), named after King Kazimierz the Great, who had granted protection to Polish Jews. This quarter became a thriving center of Jewish life with multiple synagogues, a Jewish town hall, and community institutions.</p>\n\n<h3>The Kazimierz Golden Age: Renaissance to Enlightenment</h3>\n<p>The sixteenth and seventeenth centuries saw Kraków's Jewish community reach new heights of prosperity and intellectual achievement. Prominent rabbinical scholars taught in Kraków's yeshivas. The city became known as a center of Torah learning. Jews in Kraków engaged in trade, crafts, printing, and banking. The separate Jewish quarter of Kazimierz developed into a vibrant neighborhood with a distinct character, despite legal restrictions on Jewish movement and residence.</p>\n\n<h3>Modern Era: Nineteenth and Early Twentieth Centuries</h3>\n<p>The nineteenth century brought modernization and internal diversity to Kraków's Jewish community. Tensions emerged between traditional Orthodox authorities and advocates of Jewish Enlightenment (Haskalah). The community grew to about 25,000 Jews by 1900, making it the second-largest Jewish center in Russian-occupied Poland after Warsaw. Jewish Kraków produced writers, artists, intellectuals, and political activists who contributed to broader Jewish culture.</p>\n\n<h3>The Holocaust</h3>\n<p>When Nazi Germany occupied Poland in 1939, Kraków's Jews faced the same horrors as other Jewish communities. In 1941, the Nazis established a ghetto in Podgórze, on the right bank of the Vistula, confining thousands of Jews in terrible conditions. By 1943, the ghetto was liquidated and its inhabitants deported to Auschwitz and other camps. The Jewish quarter of Kazimierz, once the heart of Jewish Kraków, was emptied of its residents.</p>\n\n<h3>Memory and Preservation</h3>\n<p>Today, Kazimierz stands as a memorial to the vanished Jewish world. The district's historic synagogues, Jewish cemetery, and narrow streets preserve the physical traces of centuries of Jewish life. Museums and memorials document the history of Kraków's Jews, from medieval times through the Holocaust, keeping alive the memory of a civilization destroyed.</p>"
   },
   {
     "id": "lodz_article",
-    "title": "Łódź",
-    "author": "",
+    "title": "Brief History of Łódź",
+    "author": "My Poland Journey",
     "form": "article",
     "runtime": null,
     "youtube_id": null,
     "places": [
       "lodz"
     ],
-    "content_type": "article"
+    "content_type": "article",
+    "body": "<h2>Łódź</h2>\n<p>Łódź (also spelled Lodz) transformed from a small village into a major industrial center in the nineteenth century, becoming the Manchester of Poland. Its Jewish population grew from almost nothing in 1820 to over 200,000 by 1939, making Łódź the second-largest Jewish city in Poland and one of the most important centers of Jewish industrial life and culture in Europe.</p>\n\n<h3>Rapid Growth: 1820–1900</h3>\n<p>Łódź's explosive growth began after the Napoleonic Wars, when it was incorporated into the Russian Empire. The development of cotton and textile manufacturing attracted workers, merchants, and entrepreneurs. Jews migrated to Łódź to participate in this industrial boom, establishing themselves as merchants, manufacturers, and workers. By 1900, Łódź's Jewish population had reached about 100,000, and the city had become a center of Jewish commerce and industry.</p>\n\n<h3>Industrial Dynamism and Social Complexity</h3>\n<p>Unlike Warsaw or Kraków, Łódź's Jewish character was shaped by industrialization and working-class socialism. The city had wealthy Jewish industrialists who owned textile mills, but also thousands of Jewish workers toiling in those same factories. This economic diversity created unique social tensions and political movements. Łódź became a hotbed of socialist, Bundist, and Jewish labor activism. The city's Jewish community also supported a vibrant cultural life with theaters, publications, and schools.</p>\n\n<h3>Interwar Period: 1920–1939</h3>\n<p>Following Poland's independence in 1918, Łódź remained an important center of Jewish economic and cultural life. However, economic competition between Polish and Jewish merchants intensified, and antisemitic boycotts began targeting Jewish businesses. Despite these challenges, Łódź's Jews maintained their community institutions and cultural traditions. The city was home to important Yiddish publications, schools, and cultural organizations.</p>\n\n<h3>The Holocaust: The Łódź Ghetto</h3>\n<p>In 1940, the Nazis established the Łódź Ghetto, confining over 160,000 Jews in a densely packed area. Under the leadership of the controversial Judenrat chairman Mordechai Chaim Rumkowski, the ghetto functioned as a labor camp producing goods for the Nazi war effort. The ghetto endured longer than Warsaw's—from 1940 to 1944—but at an enormous cost. Starvation, disease, and Nazi deportations killed thousands. By 1944, the ghetto was liquidated, with most of its surviving inhabitants sent to Auschwitz.</p>\n\n<h3>Legacy</h3>\n<p>Łódź's Jewish population was nearly destroyed. The city that once thrived on Jewish enterprise and culture was emptied. Today, efforts to preserve the memory of Łódź's Jews include the Jewish cemetery, memorials, and archives documenting the life and death of a community that made an indelible mark on Polish and Jewish history.</p>"
   }
 ]

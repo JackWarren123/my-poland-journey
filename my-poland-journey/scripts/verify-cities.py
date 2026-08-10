@@ -1,117 +1,89 @@
 #!/usr/bin/env python3
 """
-Verify city data integrity and consistency.
+Verify data integrity across cities.json and content.json.
 
 Checks:
-- Every city has unique ID and required fields
-- Valid city types
-- Source files match cities in cities.json (no orphans, no missing entries)
-- Testimonials are HTML strings (raw iframes)
+  cities.json  — unique IDs, required fields, valid types
+  content.json — required fields, valid content_type, valid place references,
+                 youtube_id present for videos, body present for articles
 
 Usage:
     python scripts/verify-cities.py
-    python scripts/verify-cities.py --fix  # (future: auto-fix some issues)
 """
 
 import json
+import sys
 from pathlib import Path
 
+VALID_CITY_TYPES = {"community", "ghetto", "camp", "massacre", "synagogue"}
+VALID_CONTENT_TYPES = {"short_video", "full_testimonial", "article"}
 
-def verify_cities():
-    script_dir = Path(__file__).parent.parent  # my-poland-journey/
-    cities_json = script_dir / "data" / "cities.json"
-    entries_dir = script_dir / "data" / "city-entries"
-    testimonials_dir = script_dir / "data" / "testimonials"
+script_dir = Path(__file__).parent.parent
+cities_path = script_dir / "data" / "cities.json"
+content_path = script_dir / "data" / "content.json"
 
-    # Read cities.json
-    with open(cities_json) as f:
-        cities = json.load(f)
+errors = []
+warnings = []
 
-    errors = []
-    warnings = []
-    seen_ids = set()
+# --- cities.json ---
+try:
+    cities = json.loads(cities_path.read_text(encoding="utf-8"))
+except Exception as e:
+    print(f"✗ Cannot read cities.json: {e}")
+    sys.exit(1)
 
-    # Invariant 1: Unique IDs
-    for city in cities:
-        if "id" not in city:
-            errors.append("City missing 'id' field")
-            continue
-        city_id = city["id"]
-        if city_id in seen_ids:
-            errors.append(f"Duplicate city ID: {city_id}")
-        seen_ids.add(city_id)
+city_ids = set()
+for city in cities:
+    cid = city.get("id", "???")
+    if cid in city_ids:
+        errors.append(f"cities.json: duplicate ID '{cid}'")
+    city_ids.add(cid)
 
-    # Invariant 2: Required fields
-    for city in cities:
-        for field in ["id", "name", "lat", "lng", "type"]:
-            if field not in city or not city[field]:
-                errors.append(
-                    f"City {city.get('id', '???')} missing or empty '{field}'"
-                )
+    for field in ["id", "name", "lat", "lng", "type"]:
+        if not city.get(field):
+            errors.append(f"cities.json [{cid}]: missing '{field}'")
 
-    # Invariant 3: Valid types
-    valid_types = {"community", "ghetto", "camp", "massacre", "synagogue"}
-    for city in cities:
-        if city.get("type") not in valid_types:
-            errors.append(
-                f"City {city['id']} has invalid type: {city.get('type')}"
-            )
+    if city.get("type") not in VALID_CITY_TYPES:
+        errors.append(f"cities.json [{cid}]: invalid type '{city.get('type')}'")
 
-    # Invariant 4: Testimonials are strings
-    for city in cities:
-        testimonials = city.get("testimonials", [])
-        if not isinstance(testimonials, list):
-            errors.append(f"City {city['id']}: testimonials is not an array")
-        for i, embed in enumerate(testimonials):
-            if not isinstance(embed, str):
-                errors.append(
-                    f"City {city['id']}: testimonials[{i}] is not a string"
-                )
+# --- content.json ---
+try:
+    content = json.loads(content_path.read_text(encoding="utf-8"))
+except Exception as e:
+    print(f"✗ Cannot read content.json: {e}")
+    sys.exit(1)
 
-    # Invariant 5: Source files consistency
-    city_ids = {c["id"] for c in cities}
+content_ids = set()
+for item in content:
+    iid = item.get("id", "???")
+    if iid in content_ids:
+        errors.append(f"content.json: duplicate ID '{iid}'")
+    content_ids.add(iid)
 
-    # Check for missing entry files
-    for city in cities:
-        entry_path = entries_dir / f"{city['id']}.html"
-        if not entry_path.exists():
-            warnings.append(f"Missing entry: {city['id']}.html")
+    ct = item.get("content_type")
+    if ct not in VALID_CONTENT_TYPES:
+        errors.append(f"content.json [{iid}]: invalid content_type '{ct}'")
 
-    # Check for orphaned entry files
-    if entries_dir.exists():
-        for entry_file in entries_dir.glob("*.html"):
-            slug = entry_file.stem
-            if slug not in city_ids:
-                errors.append(
-                    f"Orphaned entry file: {entry_file.name} "
-                    f"(city '{slug}' not in cities.json)"
-                )
+    if ct == "article" and not item.get("body"):
+        warnings.append(f"content.json [{iid}]: article has no body")
 
-    # Check for orphaned testimonials files
-    if testimonials_dir.exists():
-        for testimonials_file in testimonials_dir.glob("*.json"):
-            slug = testimonials_file.stem
-            if slug not in city_ids:
-                errors.append(
-                    f"Orphaned testimonials file: {testimonials_file.name} "
-                    f"(city '{slug}' not in cities.json)"
-                )
+    if ct in ("short_video", "full_testimonial") and not item.get("youtube_id"):
+        errors.append(f"content.json [{iid}]: video missing youtube_id")
 
-    # Report
-    if errors:
-        print("❌ ERRORS:")
-        for error in errors:
-            print(f"   {error}")
-    if warnings:
-        print("⚠ WARNINGS:")
-        for warning in warnings:
-            print(f"   {warning}")
-    if not errors and not warnings:
-        print("✓ All checks passed!")
+    for place_id in item.get("places", []):
+        if place_id not in city_ids:
+            errors.append(f"content.json [{iid}]: unknown place '{place_id}'")
 
-    return len(errors) == 0
+# --- Report ---
+if errors:
+    print("❌ ERRORS:")
+    for e in errors:
+        print(f"   {e}")
+if warnings:
+    print("⚠ WARNINGS:")
+    for w in warnings:
+        print(f"   {w}")
+if not errors and not warnings:
+    print(f"✓ All checks passed! ({len(cities)} cities, {len(content)} content items)")
 
-
-if __name__ == "__main__":
-    success = verify_cities()
-    exit(0 if success else 1)
+sys.exit(0 if not errors else 1)
