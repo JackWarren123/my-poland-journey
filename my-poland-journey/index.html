@@ -4,8 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Poland Journey</title>
-  <link rel="stylesheet" href="css/style.css?v=3">
+  <link rel="stylesheet" href="css/style.css?v=8">
   <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="app">
@@ -19,6 +20,11 @@
     <div id="controls">
       <button id="find-nearest-btn">Find Nearest Places</button>
     </div>
+
+    <!-- Account button -->
+    <button id="account-btn" aria-label="Account">
+      <img src="assets/profile-circle.svg" alt="Account" class="account-icon">
+    </button>
 
     <!-- Hint shown while in select mode -->
     <div id="select-hint">Click anywhere on the map to find the 5 nearest places</div>
@@ -36,6 +42,15 @@
         <p id="nearest-subtitle"></p>
       </div>
       <ul id="nearest-list"></ul>
+    </div>
+
+    <!-- Account panel -->
+    <div id="account-panel">
+      <div id="account-header">
+        <button id="close-account" aria-label="Close">×</button>
+        <h2>Account</h2>
+      </div>
+      <div id="account-body"></div>
     </div>
 
     <!-- Info panel -->
@@ -76,6 +91,7 @@
     </div>
 
   </div>
-  <script src="js/map.js?v=3"></script>
+  <script src="js/auth.js?v=8"></script>
+  <script src="js/map.js?v=8"></script>
 </body>
 </html>

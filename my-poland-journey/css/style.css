@@ -97,6 +97,254 @@ html, body {
   stroke-width: 2;
 }
 
+/* Account panel */
+#account-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 360px;
+  height: 100%;
+  background: #faf8f3;
+  border-left: 1px solid #d4ccbc;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  overflow: hidden;
+}
+
+#account-panel.visible {
+  transform: translateX(0);
+}
+
+#account-header {
+  padding: 28px 28px 20px;
+  border-bottom: 1px solid #d4ccbc;
+  position: relative;
+  flex-shrink: 0;
+}
+
+#close-account {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: #a09880;
+  font-size: 1.4rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px 8px;
+  transition: color 0.15s;
+  font-family: inherit;
+}
+
+#close-account:hover {
+  color: #2a2520;
+}
+
+#account-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #2a2520;
+  font-weight: 600;
+}
+
+#account-body {
+  flex: 1;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Signed-out: centered Google sign-in */
+.account-signin {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 20px;
+}
+
+.account-signin-msg {
+  color: #8a7f6f;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.google-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  background: #fff;
+  border: 1px solid #c4b9a4;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: #2a2520;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.google-btn:hover {
+  background: #f0ead8;
+  border-color: #8b5e3c;
+}
+
+/* Signed-in: user row + list toggle + list */
+.account-user {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e4ddcd;
+  flex-shrink: 0;
+}
+
+.account-email {
+  font-size: 0.85rem;
+  color: #2a2520;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-link-btn {
+  background: none;
+  border: none;
+  color: #8b5e3c;
+  font-family: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.account-link-btn:hover {
+  text-decoration: underline;
+}
+
+#account-list-view {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding: 16px 0;
+}
+
+.account-lists {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+  padding-top: 16px;
+  border-top: 1px solid #e4ddcd;
+}
+
+.account-list-btn {
+  flex: 1;
+  padding: 10px 8px;
+  background: #faf8f3;
+  border: 1px solid #c4b9a4;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: #2a2520;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.account-list-btn:hover {
+  background: #f0ead8;
+}
+
+.account-list-btn.active {
+  background: #8b5e3c;
+  color: #faf8f3;
+  border-color: #8b5e3c;
+}
+
+.account-video-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 8px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+
+.account-video-item:hover {
+  background: #f0ead8;
+  border-color: #d4ccbc;
+}
+
+.account-video-thumb {
+  width: 80px;
+  height: 45px;
+  object-fit: cover;
+  border-radius: 2px;
+  flex-shrink: 0;
+  background: #e4ddcd;
+}
+
+.account-video-city {
+  font-size: 0.9rem;
+  color: #2a2520;
+}
+
+/* Star / watch-later buttons under each video */
+.video-item {
+  margin-bottom: 1.5em;
+}
+
+.video-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.mark-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background: #faf8f3;
+  border: 1px solid #c4b9a4;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 0.78rem;
+  color: #6a6156;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.mark-btn:hover {
+  background: #f0ead8;
+  border-color: #8b5e3c;
+}
+
+.mark-btn.marked {
+  background: #8b5e3c;
+  border-color: #8b5e3c;
+  color: #faf8f3;
+}
+
+.mark-btn .mark-icon {
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
 /* Info panel */
 #info-panel {
   position: absolute;
@@ -249,17 +497,21 @@ html, body {
   margin-bottom: 1em;
 }
 
-#panel-testimonials {
+#panel-testimonials,
+#panel-short-videos,
+#panel-full-testimonials {
   padding: 24px 28px;
 }
 
-#panel-testimonials iframe {
+#panel-testimonials iframe,
+#panel-short-videos iframe,
+#panel-full-testimonials iframe {
   display: block;
   width: 100%;
   aspect-ratio: 16 / 9;
+  height: auto;
   border: none;
   border-radius: 2px;
-  margin-bottom: 1.5em;
 }
 
 .empty-state {
@@ -369,8 +621,8 @@ html, body {
 /* Map controls */
 #controls {
   position: absolute;
-  top: 22px;
-  right: 28px;
+  bottom: 165px;
+  left: 28px;
   z-index: 12;
 }
 
@@ -391,6 +643,35 @@ html, body {
 #find-nearest-btn:hover {
   background: #f0ead8;
   border-color: #8b5e3c;
+}
+
+/* Account button */
+#account-btn {
+  position: absolute;
+  top: 28px;
+  right: 28px;
+  z-index: 12;
+  width: 40px;
+  height: 40px;
+  padding: 6px;
+  background: rgba(250, 248, 243, 0.92);
+  border: 1px solid #c4b9a4;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+#account-btn:hover {
+  background: #f0ead8;
+  border-color: #8b5e3c;
+}
+
+.account-icon {
+  width: 100%;
+  height: 100%;
 }
 
 /* Zoomed in: grab cursor signals the map can be dragged to pan */

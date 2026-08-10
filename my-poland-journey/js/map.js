@@ -59,6 +59,16 @@ function getEmbedUrl(url) {
   return null;
 }
 
+// Extract the 11-char YouTube video id from either a regular link or an iframe.
+// Used as the stable key for saving/starring a video. Returns null if none found.
+function getYouTubeId(item) {
+  if (!item || typeof item !== 'string') return null;
+  const source = item.startsWith('<iframe') ? item : getEmbedUrl(item);
+  if (!source) return null;
+  const match = source.match(/embed\/([a-zA-Z0-9_-]{11})/);
+  return match ? match[1] : null;
+}
+
 function getMapDimensions() {
   return { width: window.innerWidth, height: window.innerHeight };
 }
@@ -204,6 +214,7 @@ function init() {
   document.getElementById('map-overlay').addEventListener('click', () => {
     closePanel();
     closeNearestPanel();
+    closeAccountPanel();
   });
   document.getElementById('close-panel').addEventListener('click', closePanel);
 
@@ -212,6 +223,24 @@ function init() {
   document.getElementById('close-nearest').addEventListener('click', closeNearestPanel);
   // Capture phase so a click in select mode is handled before pin/overlay handlers.
   document.getElementById('map').addEventListener('click', handleMapSelectClick, true);
+
+  // Account panel
+  document.getElementById('account-btn').addEventListener('click', openAccountPanel);
+  document.getElementById('close-account').addEventListener('click', closeAccountPanel);
+
+  // Re-render account UI + video mark buttons whenever auth/marks change
+  // (fires on initial session load and on every sign-in/sign-out).
+  if (window.Account) {
+    Account.onChange(() => {
+      if (document.getElementById('account-panel').classList.contains('visible')) {
+        renderAccountPanel();
+      }
+      if (panelState.city &&
+          (panelState.activeTab === 'short-videos' || panelState.activeTab === 'full-testimonials')) {
+        renderVideosPane(panelState.activeTab === 'short-videos' ? 'short_videos' : 'full_testimonials');
+      }
+    });
+  }
 
   // Set up tab click handlers
   setupTabHandlers();
@@ -425,11 +454,56 @@ function renderVideosPane(category = 'short_videos') {
       // Only append if we have valid HTML
       if (iframeHtml) {
         const wrapper = document.createElement('div');
+        wrapper.className = 'video-item';
         wrapper.innerHTML = iframeHtml;
+
+        // Star / watch-later actions (only for videos with a resolvable id)
+        const ytId = getYouTubeId(item);
+        if (ytId && window.Account) {
+          const actions = document.createElement('div');
+          actions.className = 'video-actions';
+          actions.appendChild(makeMarkButton('starred', ytId, panelState.cityId));
+          actions.appendChild(makeMarkButton('watch_later', ytId, panelState.cityId));
+          wrapper.appendChild(actions);
+        }
+
         testimonialsEl.appendChild(wrapper);
       }
     });
   }
+}
+
+// Build a toggle button for a video mark ('starred' or 'watch_later').
+// Reflects the current signed-in state; clicking while signed out opens the
+// account panel to prompt sign-in.
+function makeMarkButton(kind, ytId, cityId) {
+  const meta = kind === 'starred'
+    ? { icon: '★', label: 'Star' }
+    : { icon: '◷', label: 'Watch later' };
+
+  const btn = document.createElement('button');
+  btn.className = 'mark-btn';
+  btn.dataset.kind = kind;
+  btn.innerHTML = `<span class="mark-icon">${meta.icon}</span><span>${meta.label}</span>`;
+
+  const signedIn = window.Account && Account.getUser();
+  if (signedIn && Account.isMarked(kind, ytId)) btn.classList.add('marked');
+
+  btn.addEventListener('click', async (event) => {
+    event.stopPropagation();
+    if (!window.Account || !Account.getUser()) {
+      openAccountPanel();
+      return;
+    }
+    try {
+      const nowMarked = await Account.toggleMark(kind, ytId, cityId);
+      btn.classList.toggle('marked', nowMarked);
+    } catch (err) {
+      console.error('Failed to toggle mark:', err);
+    }
+  });
+
+  return btn;
 }
 
 function openPanel(city) {
@@ -492,6 +566,111 @@ function closePanel() {
     const pin = document.getElementById(`pin-${activePinId}`);
     if (pin) pin.classList.remove('active');
     activePinId = null;
+  }
+}
+
+function openAccountPanel() {
+  renderAccountPanel();
+  document.getElementById('account-panel').classList.add('visible');
+  document.getElementById('map-overlay').classList.add('active');
+}
+
+function closeAccountPanel() {
+  document.getElementById('account-panel').classList.remove('visible');
+  document.getElementById('map-overlay').classList.remove('active');
+}
+
+// Which mark list is currently shown in the account panel.
+let accountActiveKind = 'starred';
+
+function renderAccountPanel() {
+  const body = document.getElementById('account-body');
+
+  if (!window.Account) {
+    body.innerHTML = '<div class="empty-state">Accounts are unavailable right now.</div>';
+    return;
+  }
+
+  const user = Account.getUser();
+
+  if (!user) {
+    body.innerHTML =
+      '<div class="account-signin">' +
+      '<p class="account-signin-msg">Sign in to star videos and build your watch-later list.</p>' +
+      '<button id="google-signin-btn" class="google-btn">' +
+      '<svg class="google-icon" viewBox="0 0 48 48" width="18" height="18" aria-hidden="true">' +
+      '<path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>' +
+      '<path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>' +
+      '<path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>' +
+      '<path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>' +
+      '</svg><span>Sign in with Google</span></button>' +
+      '</div>';
+    document.getElementById('google-signin-btn')
+      .addEventListener('click', () => Account.signInWithGoogle());
+    return;
+  }
+
+  body.innerHTML =
+    '<div class="account-user">' +
+    `<div class="account-email">${user.email || 'Signed in'}</div>` +
+    '<button id="signout-btn" class="account-link-btn">Sign out</button>' +
+    '</div>' +
+    '<div id="account-list-view"></div>' +
+    '<div class="account-lists">' +
+    `<button class="account-list-btn ${accountActiveKind === 'starred' ? 'active' : ''}" data-kind="starred">★ Starred</button>` +
+    `<button class="account-list-btn ${accountActiveKind === 'watch_later' ? 'active' : ''}" data-kind="watch_later">◷ Watch Later</button>` +
+    '</div>';
+
+  document.getElementById('signout-btn')
+    .addEventListener('click', () => Account.signOut());
+
+  document.querySelectorAll('.account-list-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      accountActiveKind = btn.dataset.kind;
+      renderAccountPanel();
+    });
+  });
+
+  renderAccountList(accountActiveKind);
+}
+
+function renderAccountList(kind) {
+  const view = document.getElementById('account-list-view');
+  if (!view) return;
+
+  const marks = Account.getMarks(kind);
+  if (marks.length === 0) {
+    const msg = kind === 'starred'
+      ? 'No starred videos yet. Tap ★ on any video to star it.'
+      : 'Nothing saved yet. Tap ◷ on any video to watch it later.';
+    view.innerHTML = `<div class="empty-state">${msg}</div>`;
+    return;
+  }
+
+  view.innerHTML = '';
+  marks.forEach((mark) => {
+    const city = citiesData.find((c) => c.id === mark.city_id);
+    const item = document.createElement('button');
+    item.className = 'account-video-item';
+    item.innerHTML =
+      `<img class="account-video-thumb" src="https://img.youtube.com/vi/${mark.youtube_id}/mqdefault.jpg" alt="">` +
+      `<span class="account-video-city">${city ? city.name : mark.city_id}</span>`;
+    item.addEventListener('click', () => openMarkedVideo(mark.city_id, mark.youtube_id));
+    view.appendChild(item);
+  });
+}
+
+// Open a city's panel from the account list and jump to the video's tab.
+function openMarkedVideo(cityId, ytId) {
+  const city = citiesData.find((c) => c.id === cityId);
+  if (!city) return;
+  closeAccountPanel();
+  openPanel(city);
+
+  if ((city.short_videos || []).some((v) => getYouTubeId(v) === ytId)) {
+    switchTab('short-videos');
+  } else if ((city.full_testimonials || []).some((v) => getYouTubeId(v) === ytId)) {
+    switchTab('full-testimonials');
   }
 }
 
