@@ -36,6 +36,8 @@ let youtubeAPIReady = false;
 // read the city list after init().
 let projection = null;
 let citiesData = [];
+let contentData = [];      // all items from content.json
+let contentByCity = {};    // { cityId: [...items] } index built at load time
 let selectMode = false;
 
 // Double-tap zoom state. The map layers live in `zoomGroup`; `zoomTransform`
@@ -44,30 +46,6 @@ let zoomGroup = null;
 let zoomTransform = { k: 1, x: 0, y: 0 };
 const ZOOM_FACTOR = 6; // how far a double-tap zooms in
 
-function getEmbedUrl(url) {
-  if (!url || typeof url !== 'string') return null;
-
-  // If it's an iframe, return null (pass through unchanged in rendering logic)
-  if (url.startsWith('<iframe')) return null;
-
-  const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^\#\&\?]*).*$/;
-  const match = url.match(regExp);
-
-  if (match && match[2].length === 11) {
-    return `https://www.youtube.com/embed/${match[2]}`;
-  }
-  return null;
-}
-
-// Extract the 11-char YouTube video id from either a regular link or an iframe.
-// Used as the stable key for saving/starring a video. Returns null if none found.
-function getYouTubeId(item) {
-  if (!item || typeof item !== 'string') return null;
-  const source = item.startsWith('<iframe') ? item : getEmbedUrl(item);
-  if (!source) return null;
-  const match = source.match(/embed\/([a-zA-Z0-9_-]{11})/);
-  return match ? match[1] : null;
-}
 
 function getMapDimensions() {
   return { width: window.innerWidth, height: window.innerHeight };
@@ -135,8 +113,17 @@ function init() {
     d3.json('data/poland_modern.geojson'),
     d3.json('data/poland_1939.geojson'),
     d3.json('data/cities.json'),
-  ]).then(([modern, border1939, cities]) => {
+    d3.json('data/content.json'),
+  ]).then(([modern, border1939, cities, content]) => {
     citiesData = cities;
+    contentData = content || [];
+    contentByCity = {};
+    contentData.forEach((item) => {
+      (item.places || []).forEach((placeId) => {
+        if (!contentByCity[placeId]) contentByCity[placeId] = [];
+        contentByCity[placeId].push(item);
+      });
+    });
 
     // Draw 1939 border (dashed underlay)
     layerBorder.selectAll('path')
@@ -215,6 +202,7 @@ function init() {
     closePanel();
     closeNearestPanel();
     closeAccountPanel();
+    closeContentPanel();
   });
   document.getElementById('close-panel').addEventListener('click', closePanel);
 
@@ -228,6 +216,11 @@ function init() {
   document.getElementById('account-btn').addEventListener('click', openAccountPanel);
   document.getElementById('close-account').addEventListener('click', closeAccountPanel);
 
+  // All Content panel
+  document.getElementById('all-content-btn').addEventListener('click', openContentPanel);
+  document.getElementById('close-content').addEventListener('click', closeContentPanel);
+  document.getElementById('refresh-content').addEventListener('click', shuffleContentPanel);
+
   // Re-render account UI + video mark buttons whenever auth/marks change
   // (fires on initial session load and on every sign-in/sign-out).
   if (window.Account) {
@@ -237,7 +230,7 @@ function init() {
       }
       if (panelState.city &&
           (panelState.activeTab === 'short-videos' || panelState.activeTab === 'full-testimonials')) {
-        renderVideosPane(panelState.activeTab === 'short-videos' ? 'short_videos' : 'full_testimonials');
+        renderVideosPane(panelState.activeTab === 'short-videos' ? 'short_video' : 'full_testimonial');
       }
     });
   }
@@ -259,9 +252,8 @@ function isContentEmpty(city) {
 }
 
 function areVideosEmpty(city) {
-  const shortVideos = !city.short_videos || city.short_videos.length === 0;
-  const fullTestimonials = !city.full_testimonials || city.full_testimonials.length === 0;
-  return shortVideos && fullTestimonials;
+  const items = contentByCity[city.id] || [];
+  return !items.some((i) => i.content_type === 'short_video' || i.content_type === 'full_testimonial');
 }
 
 function setupTabHandlers() {
@@ -297,12 +289,12 @@ function switchTab(tabName) {
   if (tabName === 'history') {
     renderHistoryPane();
   } else if (tabName === 'short-videos') {
-    renderVideosPane('short_videos');
+    renderVideosPane('short_video');
     loadYouTubeAPI().then(() => {
       attachAutoplayListeners();
     });
   } else if (tabName === 'full-testimonials') {
-    renderVideosPane('full_testimonials');
+    renderVideosPane('full_testimonial');
     loadYouTubeAPI().then(() => {
       attachAutoplayListeners();
     });
@@ -425,81 +417,94 @@ function renderHistoryPane() {
   }
 }
 
-function renderVideosPane(category = 'short_videos') {
-  const elementId = category === 'short_videos' ? 'panel-short-videos' : 'panel-full-testimonials';
-  const testimonialsEl = document.getElementById(elementId);
-  testimonialsEl.innerHTML = '';
+function renderVideosPane(contentType = 'short_video') {
+  const elementId = contentType === 'short_video' ? 'panel-short-videos' : 'panel-full-testimonials';
+  const container = document.getElementById(elementId);
+  container.innerHTML = '';
 
-  if (!panelState.city || !panelState.city[category] || panelState.city[category].length === 0) {
-    testimonialsEl.innerHTML = '<div class="empty-state">No videos available yet</div>';
-  } else {
-    const videos = panelState.city[category];
-    videos.forEach((item, index) => {
-      let iframeHtml = null;
+  const cityItems = (contentByCity[panelState.cityId] || [])
+    .filter((item) => item.content_type === contentType);
 
-      // Check if item is a regular YouTube link or an iframe
-      if (item.startsWith('<iframe')) {
-        // Pass through existing iframe unchanged
-        iframeHtml = item;
-      } else {
-        // Try to convert regular link to embed URL
-        const embedUrl = getEmbedUrl(item);
-        if (embedUrl) {
-          // Generate iframe with standard attributes matching existing embeds
-          iframeHtml = `<iframe width="560" height="315" src="${embedUrl}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`;
-        }
-        // If embedUrl is null (invalid link), iframeHtml stays null (graceful failure)
-      }
-
-      // Only append if we have valid HTML
-      if (iframeHtml) {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'video-item';
-
-        const ytId = getYouTubeId(item);
-        if (ytId) {
-          // Thumbnail facade: show a clickable poster image and only load the
-          // iframe when the user clicks play, avoiding YouTube's heavy JS upfront.
-          const facade = document.createElement('div');
-          facade.className = 'video-facade';
-          facade.innerHTML = `<img class="video-thumb" src="https://img.youtube.com/vi/${ytId}/hqdefault.jpg" alt="YouTube video"><div class="play-overlay"><div class="play-btn">&#9654;</div></div>`;
-          facade.addEventListener('click', () => {
-            const temp = document.createElement('div');
-            temp.innerHTML = iframeHtml;
-            wrapper.replaceChild(temp.firstChild, facade);
-          });
-          wrapper.appendChild(facade);
-        } else {
-          wrapper.innerHTML = iframeHtml;
-        }
-
-        // Star / watch-later actions (only for videos with a resolvable id)
-        if (ytId && window.Account) {
-          const actions = document.createElement('div');
-          actions.className = 'video-actions';
-          actions.appendChild(makeMarkButton('starred', ytId, panelState.cityId));
-          actions.appendChild(makeMarkButton('watch_later', ytId, panelState.cityId));
-          wrapper.appendChild(actions);
-        }
-
-        testimonialsEl.appendChild(wrapper);
-      }
-    });
+  if (cityItems.length === 0) {
+    container.innerHTML = '<div class="empty-state">No videos available yet</div>';
+    return;
   }
+
+  cityItems.forEach((item) => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'video-item';
+
+    const ytId = item.youtube_id;
+    if (ytId) {
+      const iframeHtml = `<iframe width="560" height="315" src="https://www.youtube.com/embed/${ytId}" title="${item.title || 'YouTube video'}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`;
+
+      // Thumbnail facade: show a clickable poster image and only load the
+      // iframe when the user clicks play, avoiding YouTube's heavy JS upfront.
+      const facade = document.createElement('div');
+      facade.className = 'video-facade';
+      facade.innerHTML = `<img class="video-thumb" src="https://img.youtube.com/vi/${ytId}/hqdefault.jpg" alt="${item.title || 'YouTube video'}"><div class="play-overlay"><div class="play-btn">&#9654;</div></div>`;
+      facade.addEventListener('click', () => {
+        const temp = document.createElement('div');
+        temp.innerHTML = iframeHtml;
+        wrapper.replaceChild(temp.firstChild, facade);
+      });
+      wrapper.appendChild(facade);
+    }
+
+    // Metadata row (shown when title or author is filled in)
+    if (item.title || item.author || item.runtime) {
+      const meta = document.createElement('div');
+      meta.className = 'video-meta';
+      if (item.title) {
+        const titleEl = document.createElement('div');
+        titleEl.className = 'video-title';
+        titleEl.textContent = item.title;
+        meta.appendChild(titleEl);
+      }
+      const details = [];
+      if (item.author) details.push(item.author);
+      if (item.runtime) details.push(item.runtime);
+      if (details.length) {
+        const detailEl = document.createElement('div');
+        detailEl.className = 'video-detail';
+        detailEl.textContent = details.join(' · ');
+        meta.appendChild(detailEl);
+      }
+      wrapper.appendChild(meta);
+    }
+
+    // Like / watch-later actions
+    if (ytId && window.Account) {
+      const actions = document.createElement('div');
+      actions.className = 'video-actions';
+      actions.appendChild(makeMarkButton('liked', ytId, panelState.cityId));
+      actions.appendChild(makeMarkButton('watch_later', ytId, panelState.cityId));
+      wrapper.appendChild(actions);
+    }
+
+    container.appendChild(wrapper);
+  });
 }
 
-// Build a toggle button for a video mark ('starred' or 'watch_later').
-// Reflects the current signed-in state; clicking while signed out opens the
-// account panel to prompt sign-in.
+// Build a toggle button for a video mark ('liked' or 'watch_later').
+// The 'liked' button also shows the public like count.
 function makeMarkButton(kind, ytId, cityId) {
-  const meta = kind === 'starred'
-    ? { icon: '★', label: 'Star' }
+  const isLike = kind === 'liked';
+  const meta = isLike
+    ? { icon: '♥', label: 'Like' }
     : { icon: '◷', label: 'Watch later' };
 
   const btn = document.createElement('button');
   btn.className = 'mark-btn';
   btn.dataset.kind = kind;
-  btn.innerHTML = `<span class="mark-icon">${meta.icon}</span><span>${meta.label}</span>`;
+
+  function labelText() {
+    if (!isLike) return meta.label;
+    const count = window.Account ? Account.getLikeCount(ytId) : 0;
+    return count > 0 ? `${meta.label} · ${count}` : meta.label;
+  }
+
+  btn.innerHTML = `<span class="mark-icon">${meta.icon}</span><span class="mark-label">${labelText()}</span>`;
 
   const signedIn = window.Account && Account.getUser();
   if (signedIn && Account.isMarked(kind, ytId)) btn.classList.add('marked');
@@ -513,6 +518,7 @@ function makeMarkButton(kind, ytId, cityId) {
     try {
       const nowMarked = await Account.toggleMark(kind, ytId, cityId);
       btn.classList.toggle('marked', nowMarked);
+      if (isLike) btn.querySelector('.mark-label').textContent = labelText();
     } catch (err) {
       console.error('Failed to toggle mark:', err);
     }
@@ -555,8 +561,8 @@ function openPanel(city) {
   // Pre-render all three tab panes; history is shown first, video tabs are
   // hidden but their thumbnail facades are ready so switching is instant.
   switchTab('history');
-  renderVideosPane('short_videos');
-  renderVideosPane('full_testimonials');
+  renderVideosPane('short_video');
+  renderVideosPane('full_testimonial');
 
   const sourceEl = document.getElementById('panel-source');
   sourceEl.textContent = city.source || '';
@@ -598,7 +604,7 @@ function closeAccountPanel() {
 }
 
 // Which mark list is currently shown in the account panel.
-let accountActiveKind = 'starred';
+let accountActiveKind = 'liked';
 
 function renderAccountPanel() {
   const body = document.getElementById('account-body');
@@ -613,7 +619,7 @@ function renderAccountPanel() {
   if (!user) {
     body.innerHTML =
       '<div class="account-signin">' +
-      '<p class="account-signin-msg">Sign in to star videos and build your watch-later list.</p>' +
+      '<p class="account-signin-msg">Sign in to like videos and build your watch-later list.</p>' +
       '<button id="google-signin-btn" class="google-btn">' +
       '<svg class="google-icon" viewBox="0 0 48 48" width="18" height="18" aria-hidden="true">' +
       '<path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>' +
@@ -634,7 +640,7 @@ function renderAccountPanel() {
     '</div>' +
     '<div id="account-list-view"></div>' +
     '<div class="account-lists">' +
-    `<button class="account-list-btn ${accountActiveKind === 'starred' ? 'active' : ''}" data-kind="starred">★ Starred</button>` +
+    `<button class="account-list-btn ${accountActiveKind === 'liked' ? 'active' : ''}" data-kind="liked">♥ Liked</button>` +
     `<button class="account-list-btn ${accountActiveKind === 'watch_later' ? 'active' : ''}" data-kind="watch_later">◷ Watch Later</button>` +
     '</div>';
 
@@ -657,8 +663,8 @@ function renderAccountList(kind) {
 
   const marks = Account.getMarks(kind);
   if (marks.length === 0) {
-    const msg = kind === 'starred'
-      ? 'No starred videos yet. Tap ★ on any video to star it.'
+    const msg = kind === 'liked'
+      ? 'No liked videos yet. Tap ♥ on any video to like it.'
       : 'Nothing saved yet. Tap ◷ on any video to watch it later.';
     view.innerHTML = `<div class="empty-state">${msg}</div>`;
     return;
@@ -667,13 +673,17 @@ function renderAccountList(kind) {
   view.innerHTML = '';
   marks.forEach((mark) => {
     const city = citiesData.find((c) => c.id === mark.city_id);
-    const item = document.createElement('button');
-    item.className = 'account-video-item';
-    item.innerHTML =
+    const contentItem = contentData.find((c) => c.youtube_id === mark.youtube_id);
+    const btn = document.createElement('button');
+    btn.className = 'account-video-item';
+    const titleLine = contentItem && contentItem.title
+      ? `<span class="account-video-title">${contentItem.title}</span>`
+      : '';
+    btn.innerHTML =
       `<img class="account-video-thumb" src="https://img.youtube.com/vi/${mark.youtube_id}/mqdefault.jpg" alt="">` +
-      `<span class="account-video-city">${city ? city.name : mark.city_id}</span>`;
-    item.addEventListener('click', () => openMarkedVideo(mark.city_id, mark.youtube_id));
-    view.appendChild(item);
+      `<span class="account-video-city">${city ? city.name : mark.city_id}${titleLine}</span>`;
+    btn.addEventListener('click', () => openMarkedVideo(mark.city_id, mark.youtube_id));
+    view.appendChild(btn);
   });
 }
 
@@ -684,11 +694,106 @@ function openMarkedVideo(cityId, ytId) {
   closeAccountPanel();
   openPanel(city);
 
-  if ((city.short_videos || []).some((v) => getYouTubeId(v) === ytId)) {
-    switchTab('short-videos');
-  } else if ((city.full_testimonials || []).some((v) => getYouTubeId(v) === ytId)) {
-    switchTab('full-testimonials');
+  const contentItem = (contentByCity[cityId] || []).find((c) => c.youtube_id === ytId);
+  if (contentItem) {
+    if (contentItem.content_type === 'short_video') switchTab('short-videos');
+    else if (contentItem.content_type === 'full_testimonial') switchTab('full-testimonials');
   }
+}
+
+// ---- All Content panel ----
+
+const CONTENT_TYPE_LABELS = {
+  short_video: 'Short Video',
+  full_testimonial: 'Full Testimonial',
+  article: 'Article',
+};
+
+let contentPanelOrder = [];   // shuffled copy of contentData
+
+function openContentPanel() {
+  closePanel();
+  closeAccountPanel();
+  shuffleContentPanel();
+  document.getElementById('content-panel').classList.add('visible');
+  document.getElementById('map-overlay').classList.add('active');
+}
+
+function closeContentPanel() {
+  document.getElementById('content-panel').classList.remove('visible');
+  document.getElementById('map-overlay').classList.remove('active');
+}
+
+function shuffleContentPanel() {
+  contentPanelOrder = [...contentData].sort(() => Math.random() - 0.5);
+  renderContentPanel();
+}
+
+function renderContentPanel() {
+  const list = document.getElementById('content-list');
+  list.innerHTML = '';
+
+  if (contentPanelOrder.length === 0) {
+    list.innerHTML = '<div class="empty-state">No content yet.</div>';
+    return;
+  }
+
+  contentPanelOrder.forEach((item) => {
+    const btn = document.createElement('button');
+    btn.className = 'content-item';
+    btn.addEventListener('click', () => openContentItem(item));
+
+    // Thumbnail or article icon
+    if (item.youtube_id) {
+      const thumb = document.createElement('img');
+      thumb.className = 'content-item-thumb';
+      thumb.src = `https://img.youtube.com/vi/${item.youtube_id}/mqdefault.jpg`;
+      thumb.alt = '';
+      btn.appendChild(thumb);
+    } else {
+      const icon = document.createElement('div');
+      icon.className = 'content-item-thumb content-item-article-icon';
+      icon.textContent = '📄';
+      btn.appendChild(icon);
+    }
+
+    // Info column
+    const info = document.createElement('div');
+    info.className = 'content-item-info';
+
+    const title = document.createElement('div');
+    title.className = 'content-item-title';
+    title.textContent = item.title || 'Untitled';
+    info.appendChild(title);
+
+    const metaParts = [];
+    if (item.author) metaParts.push(item.author);
+    metaParts.push(CONTENT_TYPE_LABELS[item.content_type] || item.content_type);
+    if (item.runtime) metaParts.push(item.runtime);
+    const likeCount = window.Account ? Account.getLikeCount(item.youtube_id) : 0;
+    if (likeCount > 0) metaParts.push(`♥ ${likeCount}`);
+
+    const meta = document.createElement('div');
+    meta.className = 'content-item-meta';
+    meta.textContent = metaParts.join(' · ');
+    info.appendChild(meta);
+
+    btn.appendChild(info);
+    list.appendChild(btn);
+  });
+}
+
+// Open the relevant city panel when the user clicks a content item.
+function openContentItem(item) {
+  const cityId = (item.places || [])[0];
+  if (!cityId) return;
+  const city = citiesData.find((c) => c.id === cityId);
+  if (!city) return;
+  closeContentPanel();
+  openPanel(city);
+  if (item.content_type === 'short_video') switchTab('short-videos');
+  else if (item.content_type === 'full_testimonial') switchTab('full-testimonials');
+  // articles stay on the default 'history' tab
 }
 
 // ---- Double-tap zoom ----

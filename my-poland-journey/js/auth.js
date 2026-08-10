@@ -1,8 +1,10 @@
-// Supabase-backed accounts: Google sign-in + per-video "starred" / "watch later"
-// marks. Exposes a small global `window.Account` API that map.js calls into.
+// Supabase-backed accounts: Google sign-in + per-video "liked" / "watch later"
+// marks, plus public aggregate like counts.
 //
 // The anon key is public by design; row-level security on the `video_marks`
-// table (see setup SQL) is what actually restricts each user to their own rows.
+// table restricts each user to their own rows. Like counts use a SECURITY
+// DEFINER function so anonymous visitors can read aggregates without seeing
+// individual rows.
 
 (function () {
   const SUPABASE_URL = 'https://enkcyhrpxhpxoundqaez.supabase.co';
@@ -19,6 +21,7 @@
   let currentUser = null;
   let marksList = [];               // [{ youtube_id, city_id, kind, created_at }]
   let marksKeys = new Set();        // `${kind}:${youtube_id}` for O(1) lookups
+  let likeCountsCache = {};         // { youtube_id: count } — public, loaded on init
   const listeners = [];             // called on any auth/marks change
 
   function notify() {
@@ -28,7 +31,6 @@
   }
 
   async function loadMarks() {
-    // RLS scopes this to the signed-in user, so no explicit user_id filter needed.
     const { data, error } = await sb
       .from('video_marks')
       .select('youtube_id, city_id, kind, created_at')
@@ -43,11 +45,32 @@
     marksKeys = new Set(marksList.map((m) => `${m.kind}:${m.youtube_id}`));
   }
 
+  // Loads aggregate like counts via a SECURITY DEFINER RPC so anon visitors
+  // can see counts without reading individual user rows.
+  async function loadLikeCounts() {
+    const { data, error } = await sb.rpc('get_like_counts');
+    if (error) {
+      console.error('Failed to load like counts:', error);
+      return;
+    }
+    likeCountsCache = {};
+    (data || []).forEach((row) => {
+      likeCountsCache[row.youtube_id] = Number(row.likes);
+    });
+  }
+
+  function adjustLikeCount(youtubeId, delta) {
+    likeCountsCache[youtubeId] = Math.max(0, (likeCountsCache[youtubeId] || 0) + delta);
+  }
+
+  // Load like counts immediately on page load (public, no auth required).
+  loadLikeCounts();
+
   // Fires once on load (INITIAL_SESSION) and on every sign-in/sign-out.
   sb.auth.onAuthStateChange(async (_event, session) => {
     currentUser = session ? session.user : null;
     if (currentUser) {
-      await loadMarks();
+      await Promise.all([loadMarks(), loadLikeCounts()]);
     } else {
       marksList = [];
       marksKeys = new Set();
@@ -79,6 +102,10 @@
       return marksKeys.has(`${kind}:${youtubeId}`);
     },
 
+    getLikeCount(youtubeId) {
+      return likeCountsCache[youtubeId] || 0;
+    },
+
     // Adds or removes a mark; returns the new state (true = now marked).
     async toggleMark(kind, youtubeId, cityId) {
       if (!currentUser) throw new Error('Not signed in');
@@ -93,6 +120,7 @@
         marksList = marksList.filter(
           (m) => !(m.kind === kind && m.youtube_id === youtubeId),
         );
+        if (kind === 'liked') adjustLikeCount(youtubeId, -1);
         notify();
         return false;
       }
@@ -101,6 +129,7 @@
       if (error) throw error;
       marksKeys.add(key);
       marksList.unshift({ ...row, created_at: new Date().toISOString() });
+      if (kind === 'liked') adjustLikeCount(youtubeId, +1);
       notify();
       return true;
     },

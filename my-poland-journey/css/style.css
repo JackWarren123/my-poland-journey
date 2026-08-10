@@ -301,9 +301,182 @@ html, body {
 .account-video-city {
   font-size: 0.9rem;
   color: #2a2520;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-/* Star / watch-later buttons under each video */
+.account-video-title {
+  font-size: 0.78rem;
+  color: #6a6156;
+}
+
+/* All Content button — bottom-right corner */
+#all-content-btn {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  z-index: 15;
+  padding: 9px 16px;
+  background: #faf8f3;
+  border: 1px solid #c4b9a4;
+  border-radius: 4px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.82rem;
+  color: #3a3025;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+#all-content-btn:hover {
+  background: #f0ead8;
+  border-color: #8b5e3c;
+}
+
+/* All Content panel — left sidebar */
+#content-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 380px;
+  height: 100%;
+  background: #faf8f3;
+  border-right: 1px solid #d4ccbc;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  overflow: hidden;
+}
+
+#content-panel.visible {
+  transform: translateX(0);
+}
+
+#content-header {
+  padding: 28px 28px 20px;
+  border-bottom: 1px solid #d4ccbc;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+#content-header h2 {
+  flex: 1;
+  font-size: 1.1rem;
+  color: #2a2520;
+  font-weight: 600;
+}
+
+#close-content,
+#refresh-content {
+  background: none;
+  border: none;
+  color: #a09880;
+  font-size: 1.3rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px 8px;
+  transition: color 0.15s;
+  font-family: inherit;
+}
+
+#close-content:hover,
+#refresh-content:hover {
+  color: #2a2520;
+}
+
+#content-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 0;
+}
+
+.content-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid #ede8df;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: background 0.12s;
+}
+
+.content-item:hover {
+  background: #f0ead8;
+}
+
+.content-item-thumb {
+  width: 80px;
+  height: 45px;
+  object-fit: cover;
+  border-radius: 2px;
+  flex-shrink: 0;
+  background: #e4ddcd;
+}
+
+.content-item-article-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  background: #e4ddcd;
+}
+
+.content-item-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.content-item-title {
+  font-size: 0.88rem;
+  color: #2a2520;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+.content-item-meta {
+  font-size: 0.75rem;
+  color: #8a7f6f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Video metadata rows (title/author shown when filled in) */
+.video-meta {
+  margin-top: 6px;
+}
+
+.video-title {
+  font-size: 0.88rem;
+  color: #2a2520;
+  font-weight: 500;
+}
+
+.video-detail {
+  font-size: 0.78rem;
+  color: #8a7f6f;
+  margin-top: 2px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Like / watch-later buttons under each video */
 .video-item {
   margin-bottom: 1.5em;
 }
@@ -386,8 +559,17 @@ html, body {
   color: #faf8f3;
 }
 
+.mark-btn[data-kind="liked"].marked {
+  background: #b94040;
+  border-color: #b94040;
+}
+
 .mark-btn .mark-icon {
   font-size: 0.9rem;
+  line-height: 1;
+}
+
+.mark-btn .mark-label {
   line-height: 1;
 }
 

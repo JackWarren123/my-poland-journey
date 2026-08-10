@@ -26,6 +26,9 @@
       <img src="assets/profile-circle.svg" alt="Account" class="account-icon">
     </button>
 
+    <!-- All Content button -->
+    <button id="all-content-btn" aria-label="Browse all content">All Content</button>
+
     <!-- Hint shown while in select mode -->
     <div id="select-hint">Click anywhere on the map to find the 5 nearest places</div>
 
@@ -42,6 +45,16 @@
         <p id="nearest-subtitle"></p>
       </div>
       <ul id="nearest-list"></ul>
+    </div>
+
+    <!-- All Content panel -->
+    <div id="content-panel">
+      <div id="content-header">
+        <button id="close-content" aria-label="Close">×</button>
+        <h2>All Content</h2>
+        <button id="refresh-content" aria-label="Refresh" title="Shuffle content">⟳</button>
+      </div>
+      <div id="content-list"></div>
     </div>
 
     <!-- Account panel -->
