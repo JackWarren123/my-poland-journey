@@ -455,10 +455,25 @@ function renderVideosPane(category = 'short_videos') {
       if (iframeHtml) {
         const wrapper = document.createElement('div');
         wrapper.className = 'video-item';
-        wrapper.innerHTML = iframeHtml;
+
+        const ytId = getYouTubeId(item);
+        if (ytId) {
+          // Thumbnail facade: show a clickable poster image and only load the
+          // iframe when the user clicks play, avoiding YouTube's heavy JS upfront.
+          const facade = document.createElement('div');
+          facade.className = 'video-facade';
+          facade.innerHTML = `<img class="video-thumb" src="https://img.youtube.com/vi/${ytId}/hqdefault.jpg" alt="YouTube video"><div class="play-overlay"><div class="play-btn">&#9654;</div></div>`;
+          facade.addEventListener('click', () => {
+            const temp = document.createElement('div');
+            temp.innerHTML = iframeHtml;
+            wrapper.replaceChild(temp.firstChild, facade);
+          });
+          wrapper.appendChild(facade);
+        } else {
+          wrapper.innerHTML = iframeHtml;
+        }
 
         // Star / watch-later actions (only for videos with a resolvable id)
-        const ytId = getYouTubeId(item);
         if (ytId && window.Account) {
           const actions = document.createElement('div');
           actions.className = 'video-actions';
@@ -537,9 +552,11 @@ function openPanel(city) {
 
   document.getElementById('panel-name').textContent = city.name;
 
-  // Render both tabs (history tab shown, videos tab hidden but pre-rendered)
+  // Pre-render all three tab panes; history is shown first, video tabs are
+  // hidden but their thumbnail facades are ready so switching is instant.
   switchTab('history');
-  renderVideosPane();
+  renderVideosPane('short_videos');
+  renderVideosPane('full_testimonials');
 
   const sourceEl = document.getElementById('panel-source');
   sourceEl.textContent = city.source || '';
