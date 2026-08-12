@@ -52,6 +52,55 @@ function getMapDimensions() {
   return { width: window.innerWidth, height: window.innerHeight };
 }
 
+// Attach swipe-to-dismiss to a bottom-sheet panel. Dragging the handle pill
+// downward by 80px+ (or quickly flicking) closes the panel via closeFn.
+function makeSwipeable(panelEl, closeFn) {
+  const handle = panelEl.querySelector('.sheet-handle');
+  if (!handle) return;
+
+  let startY = 0;
+  let currentY = 0;
+  let startTime = 0;
+  let active = false;
+
+  handle.addEventListener('touchstart', (e) => {
+    startY = e.touches[0].clientY;
+    currentY = startY;
+    startTime = Date.now();
+    active = true;
+    panelEl.style.transition = 'none';
+  }, { passive: true });
+
+  handle.addEventListener('touchmove', (e) => {
+    if (!active) return;
+    currentY = e.touches[0].clientY;
+    const delta = Math.max(0, currentY - startY);
+    panelEl.style.transform = `translateY(${delta}px)`;
+  }, { passive: true });
+
+  function onRelease() {
+    if (!active) return;
+    active = false;
+    const delta = Math.max(0, currentY - startY);
+    const velocity = delta / Math.max(1, Date.now() - startTime); // px/ms
+    panelEl.style.transition = '';
+
+    if (delta > 80 || velocity > 0.5) {
+      panelEl.style.transform = 'translateY(100%)';
+      panelEl.addEventListener('transitionend', function onEnd() {
+        panelEl.removeEventListener('transitionend', onEnd);
+        panelEl.style.transform = '';
+        closeFn();
+      }, { once: true });
+    } else {
+      panelEl.style.transform = '';
+    }
+  }
+
+  handle.addEventListener('touchend', onRelease, { passive: true });
+  handle.addEventListener('touchcancel', onRelease, { passive: true });
+}
+
 function buildProjection(width, height) {
   // Center on the midpoint of the 1939 borders (lng 15.8–28.4 → ~22.1, lat 47.9–55.8 → ~51.8).
   // Scale reduced so the full dashed eastern border fits within the viewport.
@@ -80,10 +129,9 @@ function init() {
   // Layer order: modern fill → 1939 border on top → pins → labels
   const layerModern = zoomGroup.append('g').attr('class', 'layer-modern');
   const layerBorder = zoomGroup.append('g').attr('class', 'layer-border-1939');
-  // TEMPORARY: quadrilateral connecting the four main extermination camps
-  const layerQuad   = zoomGroup.append('g').attr('class', 'layer-quad');
   const layerPins   = zoomGroup.append('g').attr('class', 'layer-pins');
   const layerLabels = zoomGroup.append('g').attr('class', 'layer-labels');
+  const layerHits   = zoomGroup.append('g').attr('class', 'layer-hits');
 
   // Double-tap (double-click) toggles zoom: in on the tapped point, back out if
   // already zoomed. Prevent the browser's default double-click text selection.
@@ -98,8 +146,11 @@ function init() {
   // to the zoomed state (k > 1) so single-tap clicks and double-tap zoom still
   // behave normally at full view. Updates are applied without a transition for a
   // responsive 1:1 feel, and clamped so the map can't be dragged off-screen.
+  let pinching = false;
+  let pinchStart = { dist: 1, k: 1 };
+
   svg.call(d3.drag()
-    .filter((event) => zoomTransform.k > 1 && !event.button)
+    .filter((event) => zoomTransform.k > 1 && !event.button && !pinching)
     .on('drag', (event) => {
       const { x, y } = clampPan(
         zoomTransform.k,
@@ -109,6 +160,40 @@ function init() {
       applyZoom(zoomTransform.k, x, y, false);
     }));
 
+  // Pinch-to-zoom (touch). Keeps the midpoint of the two fingers stationary
+  // while scaling, using the standard formula: tx_new = cx*(1 - kRatio) + tx*kRatio.
+  const svgNode = svg.node();
+  svgNode.addEventListener('touchstart', (event) => {
+    if (event.touches.length === 2) {
+      pinching = true;
+      pinchStart.dist = Math.hypot(
+        event.touches[0].clientX - event.touches[1].clientX,
+        event.touches[0].clientY - event.touches[1].clientY,
+      );
+      pinchStart.k = zoomTransform.k;
+    }
+  }, { passive: true });
+
+  svgNode.addEventListener('touchmove', (event) => {
+    if (!pinching || event.touches.length !== 2) return;
+    const dist = Math.hypot(
+      event.touches[0].clientX - event.touches[1].clientX,
+      event.touches[0].clientY - event.touches[1].clientY,
+    );
+    const newK = Math.max(1, Math.min(ZOOM_FACTOR, pinchStart.k * (dist / pinchStart.dist)));
+    const cx = (event.touches[0].clientX + event.touches[1].clientX) / 2;
+    const cy = (event.touches[0].clientY + event.touches[1].clientY) / 2;
+    const kRatio = newK / zoomTransform.k;
+    const { x, y } = clampPan(
+      newK,
+      cx * (1 - kRatio) + zoomTransform.x * kRatio,
+      cy * (1 - kRatio) + zoomTransform.y * kRatio,
+    );
+    applyZoom(newK, x, y, false);
+  }, { passive: true });
+
+  svgNode.addEventListener('touchend', () => { pinching = false; }, { passive: true });
+
   // Load all data in parallel
   Promise.all([
     d3.json('data/poland_modern.geojson'),
@@ -116,6 +201,7 @@ function init() {
     d3.json('data/cities.json'),
     d3.json('data/content.json'),
   ]).then(([modern, border1939, cities, content]) => {
+    document.getElementById('map-loading')?.remove();
     citiesData = cities;
     contentData = content || [];
     contentByCity = {};
@@ -139,36 +225,6 @@ function init() {
       .enter().append('path')
       .attr('d', path)
       .attr('class', 'modern-border');
-
-    // TEMPORARY: quadrilateral — Chełmno → Treblinka → Majdanek → Auschwitz
-    const quadVerts = [
-      [19.2016, 52.0594], // Chełmno
-      [22.05,   52.6333], // Treblinka
-      [22.6014, 51.2189], // Majdanek
-      [19.1783, 50.0341], // Auschwitz
-    ];
-    const quadPoints = quadVerts.map(([lng, lat]) => projection([lng, lat]).join(',')).join(' ');
-    layerQuad.append('polygon')
-      .attr('points', quadPoints)
-      .attr('fill', 'rgba(180, 40, 32, 0.08)')
-      .attr('stroke', '#b02820')
-      .attr('stroke-width', 1.5)
-      .attr('stroke-dasharray', '6,4');
-
-    // TEMPORARY: scaled-out version (1.3×) to include Bielsko-Biała, Kraków, Kutno, etc.
-    const centLat = 51.4864, centLng = 20.7578;
-    const scaledPoints = quadVerts.map(([lng, lat]) => {
-      const sLat = centLat + 1.3 * (lat - centLat);
-      const sLng = centLng + 1.3 * (lng - centLng);
-      return projection([sLng, sLat]).join(',');
-    }).join(' ');
-    layerQuad.append('polygon')
-      .attr('points', scaledPoints)
-      .attr('fill', 'none')
-      .attr('stroke', '#b02820')
-      .attr('stroke-width', 1)
-      .attr('stroke-dasharray', '3,5')
-      .attr('opacity', 0.5);
 
     // Draw city pins
     layerPins.selectAll('circle')
@@ -194,7 +250,21 @@ function init() {
       .attr('y', d => projection([d.lng, d.lat])[1] + 2)
       .text(d => d.name);
 
+    // Invisible hit areas — 10px radius gives a ~20px tap target on top of the 2–3px pin.
+    layerHits.selectAll('circle')
+      .data(cities)
+      .enter().append('circle')
+      .attr('cx', d => projection([d.lng, d.lat])[0])
+      .attr('cy', d => projection([d.lng, d.lat])[1])
+      .attr('r', 10)
+      .attr('fill', 'transparent')
+      .on('click', (event, d) => {
+        event.stopPropagation();
+        openCityPanel(d);
+      });
+
   }).catch(err => {
+    document.getElementById('map-loading')?.remove();
     console.error('Failed to load data:', err);
   });
 
@@ -203,6 +273,7 @@ function init() {
     closePanel();
     closeNearestPanel();
     closeAccountPanel();
+    closeSearchPanel();
   });
 
   document.getElementById('panel-close').addEventListener('click', closePanel);
@@ -233,6 +304,20 @@ function init() {
       }
     });
   }
+
+  // Swipe-to-dismiss for mobile bottom sheets.
+  makeSwipeable(document.getElementById('panel'), closePanel);
+  makeSwipeable(document.getElementById('account-panel'), closeAccountPanel);
+  makeSwipeable(document.getElementById('nearest-panel'), closeNearestPanel);
+  makeSwipeable(document.getElementById('search-panel'), closeSearchPanel);
+
+  // Search
+  document.getElementById('search-btn').addEventListener('click', openSearchPanel);
+  document.getElementById('close-search').addEventListener('click', closeSearchPanel);
+  document.getElementById('search-input').addEventListener('input', (e) => {
+    renderSearchList(e.target.value);
+  });
+
 }
 
 // ---- Unified panel ----
@@ -714,6 +799,80 @@ function closeNearestPanel() {
   document.getElementById('nearest-panel').classList.remove('visible');
   document.getElementById('map-overlay').classList.remove('active');
 }
+
+// ---- City search ----
+
+function openSearchPanel() {
+  renderSearchList('');
+  document.getElementById('search-panel').classList.add('visible');
+  document.getElementById('map-overlay').classList.add('active');
+  setTimeout(() => document.getElementById('search-input').focus(), 320);
+}
+
+function closeSearchPanel() {
+  document.getElementById('search-panel').classList.remove('visible');
+  document.getElementById('map-overlay').classList.remove('active');
+  document.getElementById('search-input').value = '';
+}
+
+function renderSearchList(query) {
+  const list = document.getElementById('search-list');
+  const q = query.trim().toLowerCase();
+
+  const results = citiesData
+    .filter(c => !q || c.name.toLowerCase().includes(q))
+    .sort((a, b) => a.name.localeCompare(b, 'pl'));
+
+  list.innerHTML = '';
+
+  if (results.length === 0) {
+    const li = document.createElement('li');
+    li.className = 'search-empty';
+    li.textContent = 'No cities match your search.';
+    list.appendChild(li);
+    return;
+  }
+
+  results.forEach((city) => {
+    const li = document.createElement('li');
+    li.className = 'search-item';
+
+    const nameEl = document.createElement('span');
+    nameEl.className = 'search-item-name';
+    nameEl.innerHTML = q ? highlightMatch(city.name, q) : city.name;
+
+    const typeEl = document.createElement('span');
+    typeEl.className = 'search-item-type';
+    typeEl.textContent = TYPE_LABELS[city.type] || city.type;
+
+    const dot = document.createElement('span');
+    dot.className = `dot ${city.type}`;
+
+    li.appendChild(dot);
+    li.appendChild(nameEl);
+    li.appendChild(typeEl);
+    li.addEventListener('click', () => {
+      closeSearchPanel();
+      openCityPanel(city);
+    });
+    list.appendChild(li);
+  });
+}
+
+function highlightMatch(name, query) {
+  const idx = name.toLowerCase().indexOf(query);
+  if (idx === -1) return name;
+  return (
+    name.slice(0, idx) +
+    '<mark>' + name.slice(idx, idx + query.length) + '</mark>' +
+    name.slice(idx + query.length)
+  );
+}
+
+// Collapsible legend — set up once at module level, independent of map data loading
+document.querySelector('#legend .legend-label').addEventListener('click', () => {
+  document.getElementById('legend').classList.toggle('collapsed');
+});
 
 window.addEventListener('resize', () => {
   document.getElementById('map').innerHTML = '';

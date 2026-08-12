@@ -62,6 +62,30 @@ html, body {
   display: block;
 }
 
+/* Loading spinner */
+#map-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.map-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(90, 80, 64, 0.15);
+  border-top-color: #8b5e3c;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* Map geography */
 .modern-border {
   fill: #f5f0e4;
@@ -643,10 +667,6 @@ html, body {
 
 /* Legend */
 #legend {
-  position: absolute;
-  bottom: 28px;
-  left: 28px;
-  z-index: 10;
   background: rgba(250, 248, 243, 0.92);
   border: 1px solid #d4ccbc;
   border-radius: 4px;
@@ -660,6 +680,39 @@ html, body {
   color: #a09880;
   margin-bottom: 10px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.legend-chevron {
+  font-size: 0.75rem;
+  line-height: 1;
+  transition: transform 0.2s ease;
+  display: inline-block;
+}
+
+.legend-items {
+  overflow: hidden;
+  max-height: 200px;
+  transition: max-height 0.25s ease, opacity 0.2s ease;
+  opacity: 1;
+}
+
+#legend.collapsed .legend-items {
+  max-height: 0;
+  opacity: 0;
+}
+
+#legend.collapsed .legend-label {
+  margin-bottom: 0;
+}
+
+#legend.collapsed .legend-chevron {
+  transform: rotate(-90deg);
 }
 
 .legend-item {
@@ -713,17 +766,27 @@ html, body {
   user-select: none;
 }
 
-/* Map controls */
-#controls {
+/* Bottom-left stack: controls above legend, anchored at bottom-left.
+   As legend collapses the stack shrinks and controls slide down. */
+#bottom-left-stack {
   position: absolute;
-  bottom: 165px;
+  bottom: 28px;
   left: 28px;
   z-index: 12;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+/* Map controls */
+#controls {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
+#search-btn,
 #find-nearest-btn,
 #all-content-btn {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -900,4 +963,241 @@ body.select-mode #select-hint { display: block; }
 
 #map-overlay.active {
   display: block;
+}
+
+/* ---- Responsive video iframes (fix 560px overflow in 380px panel) ---- */
+.video-item iframe {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  display: block;
+}
+
+/* ---- iOS safe-area insets (notch / home indicator) ---- */
+#bottom-left-stack {
+  bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+  left: calc(28px + env(safe-area-inset-left, 0px));
+}
+
+#account-btn {
+  top: calc(28px + env(safe-area-inset-top, 0px));
+  right: calc(28px + env(safe-area-inset-right, 0px));
+}
+
+/* ---- City search panel ---- */
+
+#search-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 360px;
+  height: 100%;
+  background: #faf8f3;
+  border-left: 1px solid #d4ccbc;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  overflow: hidden;
+}
+
+#search-panel.visible {
+  transform: translateX(0);
+}
+
+#search-header {
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid #d4ccbc;
+  position: relative;
+  flex-shrink: 0;
+}
+
+#search-header h2 {
+  font-size: 1.1rem;
+  color: #2a2520;
+  font-weight: 600;
+}
+
+#close-search {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: none;
+  border: none;
+  color: #a09880;
+  font-size: 1.4rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px 8px;
+  transition: color 0.15s;
+  font-family: inherit;
+}
+
+#close-search:hover {
+  color: #2a2520;
+}
+
+#search-input-wrap {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e4ddcd;
+  flex-shrink: 0;
+}
+
+#search-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #c4b9a4;
+  border-radius: 4px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 0.95rem;
+  color: #2a2520;
+  background: #fff;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+#search-input:focus {
+  border-color: #8b5e3c;
+}
+
+#search-list {
+  flex: 1;
+  overflow-y: auto;
+  list-style: none;
+  padding: 4px 0;
+}
+
+#search-list::-webkit-scrollbar { width: 4px; }
+#search-list::-webkit-scrollbar-track { background: #faf8f3; }
+#search-list::-webkit-scrollbar-thumb { background: #d4ccbc; border-radius: 2px; }
+
+.search-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  cursor: pointer;
+  border-bottom: 1px solid #ede8df;
+  transition: background 0.12s;
+}
+
+.search-item:hover,
+.search-item:active {
+  background: #f0ead8;
+}
+
+.search-item-name {
+  flex: 1;
+  font-size: 0.9rem;
+  color: #2a2520;
+}
+
+.search-item-name mark {
+  background: transparent;
+  color: #8b5e3c;
+  font-weight: 600;
+}
+
+.search-item-type {
+  font-size: 0.72rem;
+  color: #8a7f6f;
+  white-space: nowrap;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.search-empty {
+  padding: 24px;
+  text-align: center;
+  color: #8a7f6f;
+  font-size: 0.9rem;
+  list-style: none;
+}
+
+/* ---- Drag-handle pill (hidden on desktop, shown on mobile) ---- */
+.sheet-handle {
+  display: none;
+  width: 36px;
+  height: 4px;
+  background: #c4b9a4;
+  border-radius: 2px;
+  margin: 10px auto 0;
+  flex-shrink: 0;
+}
+
+/* ---- Mobile layout (≤ 600px) ---- */
+@media (max-width: 600px) {
+  /* Bottom-sheet panels: slide up from bottom instead of in from right */
+  #panel,
+  #account-panel,
+  #nearest-panel,
+  #search-panel {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 82vh;
+    border-left: none;
+    border-top: 1px solid #d4ccbc;
+    border-radius: 14px 14px 0 0;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  #panel.visible,
+  #account-panel.visible,
+  #nearest-panel.visible,
+  #search-panel.visible {
+    transform: translateY(0);
+  }
+
+  .sheet-handle {
+    display: block;
+  }
+
+  /* Controls: break out of the stack to top-left, below header */
+  #controls {
+    position: fixed;
+    top: calc(80px + env(safe-area-inset-top, 0px));
+    left: calc(12px + env(safe-area-inset-left, 0px));
+  }
+
+  /* Stack: tuck tighter into bottom-left corner (only legend visible here on mobile) */
+  #bottom-left-stack {
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    left: calc(12px + env(safe-area-inset-left, 0px));
+    gap: 0;
+  }
+
+  /* Legend: tighter padding */
+  #legend {
+    padding: 10px 14px;
+  }
+
+  .legend-label {
+    font-size: 0.6rem;
+  }
+
+  .legend-item {
+    font-size: 0.72rem;
+    margin-bottom: 5px;
+  }
+
+  /* Account button: tighter margin on mobile */
+  #account-btn {
+    top: calc(16px + env(safe-area-inset-top, 0px));
+    right: calc(12px + env(safe-area-inset-right, 0px));
+  }
+
+  /* Header: tighter padding, leave room for account button */
+  #header {
+    padding: 14px 56px 10px 14px;
+  }
+
+  /* Select hint: shift down slightly less */
+  #select-hint {
+    top: 56px;
+  }
 }

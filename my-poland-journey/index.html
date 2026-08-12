@@ -6,8 +6,19 @@
   <title>My Poland Journey</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#7a6e5e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Poland Journey">
   <link rel="apple-touch-icon" href="assets/icon-180.png">
-  <link rel="stylesheet" href="css/style.css?v=10">
+  <!-- iOS splash screens -->
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="assets/splash-750x1334.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="assets/splash-1125x2436.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="assets/splash-828x1792.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="assets/splash-1170x2532.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="assets/splash-1284x2778.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="assets/splash-1179x2556.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="assets/splash-1290x2796.png">
+  <link rel="stylesheet" href="css/style.css?v=15">
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -19,10 +30,22 @@
       <p>Jewish Life and the Holocaust — Click a city to explore its content</p>
     </div>
 
-    <!-- Map controls -->
-    <div id="controls">
-      <button id="find-nearest-btn">Find Nearest Places</button>
-      <button id="all-content-btn">All Content</button>
+    <!-- Map controls + legend stacked in bottom-left; collapse legend → controls slide down -->
+    <div id="bottom-left-stack">
+      <div id="controls">
+        <button id="search-btn">Find City</button>
+        <button id="find-nearest-btn">Find Nearest</button>
+        <button id="all-content-btn">All Content</button>
+      </div>
+      <div id="legend">
+        <div class="legend-label">Map Key <span class="legend-chevron">▾</span></div>
+        <div class="legend-items">
+          <div class="legend-item"><span class="dot community"></span> Jewish Community</div>
+          <div class="legend-item"><span class="dot ghetto"></span> Ghetto</div>
+          <div class="legend-item"><span class="dot camp"></span> Extermination / Concentration Camp</div>
+          <div class="legend-item"><span class="legend-dash"></span> 1939 Borders</div>
+        </div>
+      </div>
     </div>
 
     <!-- Account button -->
@@ -34,12 +57,27 @@
     <div id="select-hint">Click anywhere on the map to find the 5 nearest places</div>
 
     <div id="map"></div>
+    <div id="map-loading"><div class="map-spinner"></div></div>
 
     <!-- Overlay to close panel on map click -->
     <div id="map-overlay"></div>
 
+    <!-- City search panel -->
+    <div id="search-panel">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <div id="search-header">
+        <button id="close-search" aria-label="Close">×</button>
+        <h2>Find a City</h2>
+      </div>
+      <div id="search-input-wrap">
+        <input id="search-input" type="search" placeholder="Type a city name…" autocomplete="off" autocorrect="off" spellcheck="false">
+      </div>
+      <ul id="search-list"></ul>
+    </div>
+
     <!-- Nearest-places results panel -->
     <div id="nearest-panel">
+      <div class="sheet-handle" aria-hidden="true"></div>
       <div id="nearest-header">
         <button id="close-nearest" aria-label="Close">×</button>
         <h2>Nearest Places</h2>
@@ -50,6 +88,7 @@
 
     <!-- Account panel -->
     <div id="account-panel">
+      <div class="sheet-handle" aria-hidden="true"></div>
       <div id="account-header">
         <button id="close-account" aria-label="Close">×</button>
         <h2>Account</h2>
@@ -59,6 +98,7 @@
 
     <!-- Unified content panel (right side) -->
     <div id="panel">
+      <div class="sheet-handle" aria-hidden="true"></div>
       <div id="panel-header">
         <button id="panel-back" class="hidden" aria-label="Back">←</button>
         <h2 id="panel-title"></h2>
@@ -70,18 +110,9 @@
       </div>
     </div>
 
-    <!-- Legend -->
-    <div id="legend">
-      <div class="legend-label">Map Key</div>
-      <div class="legend-item"><span class="dot community"></span> Jewish Community</div>
-      <div class="legend-item"><span class="dot ghetto"></span> Ghetto</div>
-      <div class="legend-item"><span class="dot camp"></span> Extermination / Concentration Camp</div>
-      <div class="legend-item"><span class="legend-dash"></span> 1939 Borders</div>
-    </div>
-
   </div>
-  <script src="js/auth.js?v=10"></script>
-  <script src="js/map.js?v=10"></script>
+  <script src="js/auth.js?v=15"></script>
+  <script src="js/map.js?v=15"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js');

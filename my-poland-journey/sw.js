@@ -1,4 +1,4 @@
-const CACHE = 'poland-journey-v1';
+const CACHE = 'poland-journey-v4';
 
 const PRECACHE = [
   '/',
@@ -7,6 +7,7 @@ const PRECACHE = [
   '/js/map.js',
   '/js/auth.js',
   '/data/cities.json',
+  '/data/content.json',
   '/data/poland_modern.geojson',
   '/data/poland_1939.geojson',
   '/assets/icon-192.png',
