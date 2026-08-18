@@ -11,6 +11,13 @@ html, body {
   color: #2a2520;
   font-family: Georgia, 'Times New Roman', serif;
   overflow: hidden;
+  /* Stops the browser's native double-tap-to-zoom (and the ~300ms tap
+     delay) on the whole page — without it, two quick taps on any
+     button (e.g. re-tapping "Find Nearest") can be read as a double-tap
+     gesture and zoom the entire viewport, header included, instead of
+     just registering as two clicks. Doesn't affect the map's own
+     double-tap zoom or pinch-to-zoom, both handled in JS. */
+  touch-action: manipulation;
 }
 
 #app {
@@ -21,31 +28,157 @@ html, body {
   flex-direction: column;
 }
 
-/* Header */
+/* Design tokens for chrome — header, action bar, map key, account icon
+   all share one fill, one edge treatment and one corner radius, so they
+   read as a single "map plate" vocabulary. The fill is one decisive,
+   warm step deeper than the page parchment (#ede8df) — kraft paper
+   against a manila folder, not a faint tint and not a light slab — with
+   a soft edge as insurance so the plate still reads as intentional even
+   where the fill contrast is quiet. Minimal radius over soft iOS
+   rounding, keeping the archival/atlas tone of the rest of the app. */
+:root {
+  --frame-fill: #d4ccbc;
+  --frame-fill-hover: #c7bca5;
+  --frame-edge: #b5a686;
+  --frame-radius: 3px;
+  --frame-shadow: 0 1px 2px rgba(58, 48, 37, 0.2);
+  --dash-color: #8b5e3c;
+}
+
+/* Header chrome — one persistent, always-opaque bar: title + profile
+   icon on top, the three action buttons docked directly below as a
+   continuous strip. Fixed to the top of the screen, never scrolls with
+   the map, never fades — there's no plate-on/plate-off state to jump
+   between. */
 #header {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   z-index: 10;
-  padding: 20px 28px;
-  pointer-events: none;
+  background: var(--frame-fill);
+  border: 1px solid var(--frame-edge);
+  border-radius: 0 0 var(--frame-radius) var(--frame-radius);
+  /* The shared --frame-shadow reads as almost nothing along a full-width
+     edge (it's tuned for small floating plates). Layer in a second,
+     wider/softer shadow so the seam holds up even if a pale label ever
+     scrolls right up against it while zoomed — still meant to be barely
+     noticeable, not a hard drop shadow. */
+  box-shadow: var(--frame-shadow), 0 4px 6px -3px rgba(58, 48, 37, 0.16);
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+#header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 28px 10px;
+}
+
+/* Dashed rule underneath the title echoes the "1939 Borders" line in the
+   map key; the compass ornament reuses the same warm brown so the icon,
+   the cursive "My" lead-in, and the engraved caps read as one lockup
+   instead of three unrelated fragments. */
+.title-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 2px dashed var(--dash-color);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.title-ornament {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  align-self: center;
+  fill: none;
+  stroke: var(--dash-color);
+  stroke-width: 1.4;
+  opacity: 0.85;
+}
+
+.title-ornament rect {
+  fill: var(--dash-color);
+  fill-opacity: 0.5;
 }
 
 #header h1 {
-  font-size: 1.35rem;
+  font-size: 1.3rem;
   font-weight: normal;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #3a3025;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
-#header p {
-  font-size: 0.78rem;
-  color: #8a7f6f;
-  letter-spacing: 0.05em;
-  margin-top: 3px;
-  font-style: italic;
+/* A restrained script lead-in — sober fountain-pen face, not a
+   flourish — standing in for the orphaned "MY" and giving the title a
+   quiet "my journey" note ahead of the engraved caps. Snell Roundhand
+   is a built-in Apple system font, so it renders reliably in the app;
+   'cursive' is the last-resort fallback elsewhere. */
+.title-lead {
+  font-family: 'Snell Roundhand', 'Lucida Calligraphy', cursive;
+  font-size: 1.3em;
+  font-weight: normal;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #6b5a42;
+  margin-right: 0.05em;
+}
+
+/* Three actions docked as one continuous strip, part of the same header
+   plate — replaces the floating button cluster that used to sit on top
+   of map labels. Equal thirds, thin dividers, no per-button plate. */
+#header-actions {
+  display: flex;
+  border-radius: 0 0 var(--frame-radius) var(--frame-radius);
+  overflow: hidden;
+}
+
+#header-actions > button,
+#header-actions > #find-nearest-wrap {
+  flex: 1 1 0;
+}
+
+#search-btn,
+#find-nearest-btn,
+#all-content-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 0.68rem;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #3a3025;
+  background: transparent;
+  border: none;
+  -webkit-appearance: none;
+  appearance: none;
+  padding: 10px 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+#search-btn,
+#find-nearest-wrap {
+  border-right: 1px solid var(--frame-edge);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  #search-btn:hover,
+  #find-nearest-btn:hover,
+  #all-content-btn:hover {
+    background: var(--frame-fill-hover);
+  }
 }
 
 /* Map container */
@@ -211,7 +344,11 @@ html, body {
 
 /* Panel list view */
 #panel-list {
-  flex: 1;
+  /* flex-basis: auto (not the `flex: 1` shorthand's 0%) so a short list
+     sizes to its content in #panel's auto-height sheet, instead of
+     WebKit expanding it to fill the height it doesn't need. Still grows
+     to fill (and scroll within) capped/full-height panels via flex-grow. */
+  flex: 1 1 auto;
   overflow-y: auto;
   padding: 8px 0;
 }
@@ -246,6 +383,13 @@ html, body {
   background: #f0ead8;
 }
 
+.panel-item-thumb-wrap {
+  position: relative;
+  width: 80px;
+  height: 45px;
+  flex-shrink: 0;
+}
+
 .panel-item-thumb {
   width: 80px;
   height: 45px;
@@ -253,6 +397,24 @@ html, body {
   border-radius: 2px;
   flex-shrink: 0;
   background: #e4ddcd;
+}
+
+.panel-item-thumb-wrap .panel-item-thumb {
+  display: block;
+}
+
+.panel-item-duration {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  padding: 1px 4px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  font-size: 0.62rem;
+  line-height: 1.3;
+  font-weight: 500;
+  border-radius: 2px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 .panel-item-article-icon {
@@ -291,7 +453,8 @@ html, body {
 
 /* Panel detail view */
 #panel-detail {
-  flex: 1;
+  /* See #panel-list — flex-basis: auto avoids over-expanding short content. */
+  flex: 1 1 auto;
   overflow-y: auto;
   min-height: 0;
 }
@@ -513,6 +676,163 @@ html, body {
   min-height: 0;
 }
 
+/* "Settings" row inside the account view */
+.account-settings-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 14px 0;
+  margin-bottom: 4px;
+  border: none;
+  border-bottom: 1px solid #e4ddcd;
+  background: none;
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: #2a2520;
+  cursor: pointer;
+  text-align: left;
+}
+
+.account-settings-btn:hover {
+  color: #8b5e3c;
+}
+
+.account-settings-btn .chevron {
+  color: #a09880;
+  font-size: 0.85rem;
+}
+
+/* Settings panel (opens on top of the account panel) */
+#settings-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 360px;
+  height: 100%;
+  background: #faf8f3;
+  border-left: 1px solid #d4ccbc;
+  z-index: 26;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  overflow: hidden;
+}
+
+#settings-panel.visible {
+  transform: translateX(0);
+}
+
+#settings-header {
+  padding: 28px 28px 20px;
+  border-bottom: 1px solid #d4ccbc;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+#settings-back {
+  background: none;
+  border: none;
+  color: #a09880;
+  font-size: 1.2rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px 6px;
+  margin-left: -6px;
+  transition: color 0.15s;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+
+#settings-back:hover {
+  color: #2a2520;
+}
+
+#settings-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #2a2520;
+  font-weight: 600;
+}
+
+#settings-body {
+  flex: 1;
+  padding: 8px 28px;
+  overflow-y: auto;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 0;
+  border-bottom: 1px solid #e4ddcd;
+}
+
+.settings-row-text {
+  min-width: 0;
+}
+
+.settings-row-label {
+  font-size: 0.9rem;
+  color: #2a2520;
+}
+
+.settings-row-desc {
+  font-size: 0.78rem;
+  color: #8a7f6f;
+  margin-top: 3px;
+  line-height: 1.4;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 46px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+  background: #d4ccbc;
+  border-radius: 999px;
+  transition: background 0.2s;
+}
+
+.toggle-slider::before {
+  content: "";
+  position: absolute;
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  top: 3px;
+  background: #faf8f3;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background: #8b5e3c;
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(20px);
+}
+
 /* Signed-out: centered Google sign-in */
 .account-signin {
   flex: 1;
@@ -643,6 +963,13 @@ html, body {
   border-color: #d4ccbc;
 }
 
+.account-video-thumb-wrap {
+  position: relative;
+  width: 80px;
+  height: 45px;
+  flex-shrink: 0;
+}
+
 .account-video-thumb {
   width: 80px;
   height: 45px;
@@ -650,26 +977,47 @@ html, body {
   border-radius: 2px;
   flex-shrink: 0;
   background: #e4ddcd;
+  display: block;
 }
 
-.account-video-city {
-  font-size: 0.9rem;
-  color: #2a2520;
+.account-video-info {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
 .account-video-title {
+  font-size: 0.9rem;
+  color: #2a2520;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.account-video-meta {
   font-size: 0.78rem;
   color: #6a6156;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Legend */
 #legend {
-  background: rgba(250, 248, 243, 0.92);
-  border: 1px solid #d4ccbc;
-  border-radius: 4px;
+  background: var(--frame-fill);
+  /* A fully-enclosed border (all 4 rounded corners) reads a shade
+     heavier than the header's, whose top edge is flush with the screen
+     and barely shows — soften it slightly so the two plates sit as
+     visual siblings rather than the key looking more "outlined". */
+  border: 1px solid color-mix(in srgb, var(--frame-edge) 65%, var(--frame-fill));
+  border-radius: var(--frame-radius);
+  /* --frame-shadow alone is tuned subtle enough it barely registers on
+     a small floating panel, especially now the border's been softened —
+     layer in a wider, gentle lift so the key visibly floats above the
+     map rather than reading as flat. */
+  box-shadow: var(--frame-shadow), 0 4px 10px -4px rgba(58, 48, 37, 0.22);
   padding: 14px 18px;
 }
 
@@ -738,7 +1086,7 @@ html, body {
 }
 
 .dot.community { background: #3a7bc8; }
-.dot.ghetto    { background: #c87c10; }
+.dot.ghetto    { background: #3a7bc8; }
 .dot.camp      { background: #b02820; }
 .dot.massacre  { background: #7b3a9e; }
 .dot.synagogue { background: #1e8a4a; }
@@ -760,76 +1108,109 @@ html, body {
 /* City labels on map */
 .city-label {
   font-family: Georgia, serif;
-  font-size: 3px;
+  font-size: 2.5px;
   fill: #6a5e4e;
   pointer-events: none;
   user-select: none;
 }
 
-/* Bottom-left stack: controls above legend, anchored at bottom-left.
-   As legend collapses the stack shrinks and controls slide down. */
+/* "You are here" dot (Settings > Share Your Location) */
+.layer-user-location {
+  pointer-events: none;
+}
+
+.user-location-pulse {
+  fill: #4285f4;
+  opacity: 0.3;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: user-location-pulse 2.4s ease-out infinite;
+}
+
+@keyframes user-location-pulse {
+  0%   { transform: scale(0.4); opacity: 0.35; }
+  100% { transform: scale(1); opacity: 0; }
+}
+
+.user-location-cone {
+  fill: #4285f4;
+  opacity: 0.3;
+}
+
+.user-location-dot {
+  fill: #4285f4;
+  stroke: #fff;
+  stroke-width: 1.5;
+}
+
+/* Bottom-left stack now holds only the map key — the three buttons live
+   in the header. Kept as its own wrapper in case something else joins
+   it later; today it's a pass-through around #legend. */
 #bottom-left-stack {
   position: absolute;
   bottom: 28px;
   left: 28px;
   z-index: 12;
+}
+
+/* Find Nearest + its select-mode cancel badge */
+#find-nearest-wrap {
+  position: relative;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 12px;
 }
 
-/* Map controls */
-#controls {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+#find-nearest-wrap #find-nearest-btn {
+  width: 100%;
 }
 
-#search-btn,
-#find-nearest-btn,
-#all-content-btn {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #3a3025;
-  background: rgba(250, 248, 243, 0.92);
-  border: 1px solid #c4b9a4;
-  border-radius: 3px;
-  padding: 9px 16px;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-}
-
-#find-nearest-btn:hover,
-#all-content-btn:hover {
-  background: #f0ead8;
-  border-color: #8b5e3c;
-}
-
-/* Account button */
-#account-btn {
+/* Small enough to tuck into the gap between the label and the button's
+   own right edge (the divider), instead of overlapping the corner. */
+#cancel-select-mode {
+  display: none;
   position: absolute;
-  top: 28px;
-  right: 28px;
-  z-index: 12;
-  width: 40px;
-  height: 40px;
-  padding: 6px;
-  background: rgba(250, 248, 243, 0.92);
-  border: 1px solid #c4b9a4;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  width: 13px;
+  height: 13px;
+  padding: 0;
+  border: none;
   border-radius: 50%;
+  background: rgba(90, 84, 74, 0.55);
+  color: #faf8f3;
+  font-size: 9px;
+  line-height: 1;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+}
+
+body.select-mode #cancel-select-mode {
+  display: flex;
+}
+
+/* Account button — a plain icon button flush in the header bar (no
+   plate of its own; it already sits on the header's plate), matching
+   the "quiet chrome" the rest of the header now uses. */
+#account-btn {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  padding: 6px;
+  background: transparent;
+  border: none;
+  border-radius: var(--frame-radius);
+  -webkit-appearance: none;
+  appearance: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.15s;
 }
 
 #account-btn:hover {
-  background: #f0ead8;
-  border-color: #8b5e3c;
+  background: var(--frame-fill-hover);
 }
 
 .account-icon {
@@ -848,13 +1229,12 @@ body.select-mode .city-pin { cursor: crosshair; }
 body.select-mode #find-nearest-btn {
   background: #8b5e3c;
   color: #faf8f3;
-  border-color: #8b5e3c;
 }
 
 #select-hint {
   display: none;
   position: absolute;
-  top: 70px;
+  top: calc(env(safe-area-inset-top, 0px) + 100px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 12;
@@ -928,7 +1308,8 @@ body.select-mode #select-hint { display: block; }
 #nearest-list {
   list-style: none;
   overflow-y: auto;
-  flex: 1;
+  /* See #panel-list — flex-basis: auto avoids over-expanding short content. */
+  flex: 1 1 auto;
 }
 
 .nearest-item {
@@ -938,6 +1319,13 @@ body.select-mode #select-hint { display: block; }
   padding: 16px 28px;
   border-bottom: 1px solid #e8e1d3;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.nearest-item:hover,
+.nearest-item:active {
+  background: #f0ead8;
 }
 
 .nearest-name {
@@ -974,14 +1362,10 @@ body.select-mode #select-hint { display: block; }
 }
 
 /* ---- iOS safe-area insets (notch / home indicator) ---- */
+/* max(), not +: see the mobile override below for why. */
 #bottom-left-stack {
-  bottom: calc(28px + env(safe-area-inset-bottom, 0px));
-  left: calc(28px + env(safe-area-inset-left, 0px));
-}
-
-#account-btn {
-  top: calc(28px + env(safe-area-inset-top, 0px));
-  right: calc(28px + env(safe-area-inset-right, 0px));
+  bottom: max(28px, env(safe-area-inset-bottom, 0px));
+  left: max(28px, env(safe-area-inset-left, 0px));
 }
 
 /* ---- City search panel ---- */
@@ -1050,7 +1434,9 @@ body.select-mode #select-hint { display: block; }
   border: 1px solid #c4b9a4;
   border-radius: 4px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-size: 0.95rem;
+  /* iOS zooms the whole page in on focus for any input under 16px —
+     keep this at 16px so autofocusing the panel doesn't trigger it. */
+  font-size: 16px;
   color: #2a2520;
   background: #fff;
   outline: none;
@@ -1132,7 +1518,8 @@ body.select-mode #select-hint { display: block; }
   #panel,
   #account-panel,
   #nearest-panel,
-  #search-panel {
+  #search-panel,
+  #settings-panel {
     top: auto;
     bottom: 0;
     left: 0;
@@ -1146,10 +1533,60 @@ body.select-mode #select-hint { display: block; }
     transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
 
+  /* Find a City / Account / Settings: full-screen sheets instead of partial */
+  #search-panel,
+  #account-panel,
+  #settings-panel {
+    height: 100vh;
+    height: 100dvh;
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* City content / All Content: size to content — a city with one article
+     stays short, but a long list (or All Content) grows up to full screen
+     and scrolls internally via #panel-list / #panel-detail's own
+     overflow-y: auto rather than forcing every city to full height. */
+  #panel {
+    height: auto;
+    max-height: 100vh;
+    max-height: 100dvh;
+  }
+
+  /* Only pad for the status bar once the panel has actually grown to reach
+     the top of the screen (long content) — applied via JS (ResizeObserver
+     in map.js), since a short sheet anchored at the bottom isn't anywhere
+     near the notch and shouldn't get a dead gap above its drag handle. */
+  #panel.panel-reaches-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* Short lists/articles sit flush against bottom:0, so the last row can
+     end up crowded against the home indicator / rounded screen corner —
+     give it real breathing room there. */
+  #panel-list {
+    padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  }
+
+  #panel-detail-body {
+    padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Nearest Places: always exactly 5 short rows — size to content instead
+     of the full 82vh sheet, with a cap in case that ever changes. */
+  #nearest-panel {
+    height: auto;
+    max-height: 82vh;
+  }
+
+  #nearest-list {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
   #panel.visible,
   #account-panel.visible,
   #nearest-panel.visible,
-  #search-panel.visible {
+  #search-panel.visible,
+  #settings-panel.visible {
     transform: translateY(0);
   }
 
@@ -1157,23 +1594,39 @@ body.select-mode #select-hint { display: block; }
     display: block;
   }
 
-  /* Controls: break out of the stack to top-left, below header */
-  #controls {
-    position: fixed;
-    top: calc(80px + env(safe-area-inset-top, 0px));
-    left: calc(12px + env(safe-area-inset-left, 0px));
-  }
-
-  /* Stack: tuck tighter into bottom-left corner (only legend visible here on mobile) */
+  /* Stack: tuck tighter into the bottom-left corner (just the legend
+     lives here on mobile too — the buttons are in the header).
+     max(), not +: the home-indicator inset should replace the flat margin
+     on devices that have one, not stack on top of it — otherwise the
+     bottom gap ends up much bigger than the left gap, which has no
+     equivalent inset in portrait. */
   #bottom-left-stack {
-    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-    left: calc(12px + env(safe-area-inset-left, 0px));
-    gap: 0;
+    bottom: max(20px, env(safe-area-inset-bottom, 0px));
+    left: max(20px, env(safe-area-inset-left, 0px));
   }
 
-  /* Legend: tighter padding */
+  /* Legend: tighter padding; round the bottom-left corner more so it
+     doesn't look clipped by the device's rounded screen corner */
   #legend {
     padding: 10px 14px;
+    border-radius: var(--frame-radius) var(--frame-radius) var(--frame-radius) 16px;
+  }
+
+  /* Find a City: wider left/right margins so text and the search box
+     don't hug the screen edges */
+  #search-header {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  #search-input-wrap {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .search-item {
+    padding-left: 24px;
+    padding-right: 24px;
   }
 
   .legend-label {
@@ -1185,19 +1638,19 @@ body.select-mode #select-hint { display: block; }
     margin-bottom: 5px;
   }
 
-  /* Account button: tighter margin on mobile */
-  #account-btn {
-    top: calc(16px + env(safe-area-inset-top, 0px));
-    right: calc(12px + env(safe-area-inset-right, 0px));
+  /* Header: tighter padding on mobile */
+  #header-top {
+    padding: 10px 20px 8px;
   }
 
-  /* Header: tighter padding, leave room for account button */
-  #header {
-    padding: 14px 56px 10px 14px;
+  #search-btn,
+  #find-nearest-btn,
+  #all-content-btn {
+    padding: 8px 6px;
   }
 
-  /* Select hint: shift down slightly less */
+  /* Select hint: sits just under the shorter mobile header */
   #select-hint {
-    top: 56px;
+    top: calc(env(safe-area-inset-top, 0px) + 90px);
   }
 }

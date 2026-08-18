@@ -16,7 +16,42 @@
     return;
   }
 
-  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  // flowType: 'pkce' is required for exchangeCodeForSession() below, used to
+  // complete the native app's custom-scheme OAuth callback.
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { flowType: 'pkce' },
+  });
+
+  // Custom URL scheme registered in ios/App/App/Info.plist (CFBundleURLTypes).
+  // Must also be added as an allowed Redirect URL in the Supabase dashboard
+  // (Authentication > URL Configuration).
+  const NATIVE_AUTH_CALLBACK = 'mypolandjourney://auth-callback';
+
+  const Capacitor = window.Capacitor;
+  const isNative = !!(Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform());
+
+  // In the native app, OAuth runs in an in-app browser (ASWebAuthenticationSession
+  // via the Browser plugin) instead of a full page redirect, since the WKWebView
+  // has no reachable web origin for Google to redirect back to. The callback
+  // arrives as a custom-scheme URL via the App plugin's appUrlOpen event.
+  if (isNative) {
+    Capacitor.Plugins.App.addListener('appUrlOpen', async ({ url }) => {
+      if (!url || !url.startsWith(NATIVE_AUTH_CALLBACK)) return;
+      try {
+        const params = new URL(url).searchParams;
+        const oauthError = params.get('error_description') || params.get('error');
+        if (oauthError) throw new Error(oauthError);
+        const code = params.get('code');
+        if (!code) throw new Error(`No code in callback URL: ${url}`);
+        const { error } = await sb.auth.exchangeCodeForSession(code);
+        if (error) throw error;
+      } catch (err) {
+        console.error('Google sign-in failed:', err);
+      } finally {
+        Capacitor.Plugins.Browser.close().catch(() => {});
+      }
+    });
+  }
 
   let currentUser = null;
   let marksList = [];               // [{ youtube_id, city_id, kind, created_at }]
@@ -87,7 +122,16 @@
       listeners.push(fn);
     },
 
-    signInWithGoogle() {
+    async signInWithGoogle() {
+      if (isNative) {
+        const { data, error } = await sb.auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo: NATIVE_AUTH_CALLBACK, skipBrowserRedirect: true },
+        });
+        if (error) throw error;
+        await Capacitor.Plugins.Browser.open({ url: data.url });
+        return;
+      }
       return sb.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo: window.location.origin + window.location.pathname },

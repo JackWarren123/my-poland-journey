@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>My Poland Journey</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#7a6e5e">
@@ -18,40 +18,52 @@
   <link rel="apple-touch-startup-image" media="screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="assets/splash-1284x2778.png">
   <link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="assets/splash-1179x2556.png">
   <link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="assets/splash-1290x2796.png">
-  <link rel="stylesheet" href="css/style.css?v=15">
+  <link rel="stylesheet" href="css/style.css?v=53">
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="app">
 
+    <!-- Persistent header chrome: title + profile icon on top, the three
+         action buttons docked below as one continuous, always-opaque bar.
+         Never fades — nothing from the map is ever meant to show through. -->
     <div id="header">
-      <h1>My Poland Journey</h1>
-      <p>Jewish Life and the Holocaust — Click a city to explore its content</p>
-    </div>
-
-    <!-- Map controls + legend stacked in bottom-left; collapse legend → controls slide down -->
-    <div id="bottom-left-stack">
-      <div id="controls">
+      <div id="header-top">
+        <div class="title-row">
+          <svg class="title-ornament" viewBox="0 0 24 24" aria-hidden="true">
+            <line x1="12" y1="1" x2="12" y2="23"></line>
+            <line x1="1" y1="12" x2="23" y2="12"></line>
+            <rect x="9" y="9" width="6" height="6" transform="rotate(45 12 12)"></rect>
+          </svg>
+          <h1><span class="title-lead">My</span> Poland Journey</h1>
+        </div>
+        <button id="account-btn" aria-label="Account">
+          <img src="assets/profile-circle.svg" alt="Account" class="account-icon">
+        </button>
+      </div>
+      <div id="header-actions">
         <button id="search-btn">Find City</button>
-        <button id="find-nearest-btn">Find Nearest</button>
+        <div id="find-nearest-wrap">
+          <button id="find-nearest-btn">Find Nearest</button>
+          <button id="cancel-select-mode" aria-label="Cancel Find Nearest">×</button>
+        </div>
         <button id="all-content-btn">All Content</button>
       </div>
+    </div>
+
+    <!-- Map key, still floating at bottom-left; same plate tone/edge/radius
+         as the header now ties it to the same chrome family. -->
+    <div id="bottom-left-stack">
       <div id="legend">
         <div class="legend-label">Map Key <span class="legend-chevron">▾</span></div>
         <div class="legend-items">
           <div class="legend-item"><span class="dot community"></span> Jewish Community</div>
-          <div class="legend-item"><span class="dot ghetto"></span> Ghetto</div>
           <div class="legend-item"><span class="dot camp"></span> Extermination / Concentration Camp</div>
           <div class="legend-item"><span class="legend-dash"></span> 1939 Borders</div>
         </div>
       </div>
     </div>
-
-    <!-- Account button -->
-    <button id="account-btn" aria-label="Account">
-      <img src="assets/profile-circle.svg" alt="Account" class="account-icon">
-    </button>
 
     <!-- Hint shown while in select mode -->
     <div id="select-hint">Click anywhere on the map to find the 5 nearest places</div>
@@ -96,6 +108,15 @@
       <div id="account-body"></div>
     </div>
 
+    <div id="settings-panel">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <div id="settings-header">
+        <button id="settings-back" aria-label="Back to account">←</button>
+        <h2>Settings</h2>
+      </div>
+      <div id="settings-body"></div>
+    </div>
+
     <!-- Unified content panel (right side) -->
     <div id="panel">
       <div class="sheet-handle" aria-hidden="true"></div>
@@ -111,8 +132,8 @@
     </div>
 
   </div>
-  <script src="js/auth.js?v=15"></script>
-  <script src="js/map.js?v=15"></script>
+  <script src="js/auth.js?v=42"></script>
+  <script src="js/map.js?v=44"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js');

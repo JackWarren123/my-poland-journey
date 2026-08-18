@@ -9,14 +9,14 @@
   },
   {
     "id": "krakow",
-    "name": "Kraków",
+    "name": "Krakow",
     "lat": 50.0647,
     "lng": 19.945,
     "type": "community"
   },
   {
     "id": "lodz",
-    "name": "Łódź",
+    "name": "Lodz",
     "lat": 51.7592,
     "lng": 19.456,
     "type": "ghetto",
@@ -46,14 +46,14 @@
   },
   {
     "id": "sobibor",
-    "name": "Sobibór",
+    "name": "Sobibor",
     "lat": 51.4456,
     "lng": 23.5921,
     "type": "camp"
   },
   {
     "id": "belzec",
-    "name": "Bełżec",
+    "name": "Belzec",
     "lat": 50.3735,
     "lng": 23.4584,
     "type": "camp"
@@ -67,7 +67,7 @@
   },
   {
     "id": "bialystok",
-    "name": "Białystok",
+    "name": "Bialystok",
     "lat": 53.1325,
     "lng": 23.1688,
     "type": "ghetto",
@@ -75,28 +75,28 @@
   },
   {
     "id": "lwow",
-    "name": "Lwów / Lviv",
+    "name": "Lvov",
     "lat": 49.8397,
     "lng": 24.0297,
     "type": "community"
   },
   {
     "id": "vilna",
-    "name": "Vilna / Vilnius",
+    "name": "Vilna",
     "lat": 54.6872,
     "lng": 25.2797,
     "type": "community"
   },
   {
     "id": "leczyca",
-    "name": "Łęczyca",
+    "name": "Leczyca",
     "lat": 52.1128,
     "lng": 18.7516,
     "type": "community"
   },
   {
     "id": "chelmno",
-    "name": "Chełmno",
+    "name": "Chelmno",
     "lat": 52.0594,
     "lng": 19.2016,
     "type": "camp"
@@ -110,7 +110,7 @@
   },
   {
     "id": "gdansk",
-    "name": "Gdańsk",
+    "name": "Gdansk",
     "lat": 54.3483,
     "lng": 18.654,
     "type": "community"
@@ -124,7 +124,7 @@
   },
   {
     "id": "grudziadz",
-    "name": "Grudziądz",
+    "name": "Grudziadz",
     "lat": 53.4876,
     "lng": 18.7558,
     "type": "community"
@@ -139,14 +139,14 @@
   },
   {
     "id": "torun",
-    "name": "Toruń",
+    "name": "Torun",
     "lat": 53.0145,
     "lng": 18.5966,
     "type": "community"
   },
   {
     "id": "czarnkow",
-    "name": "Czarnków",
+    "name": "Czarnkow",
     "lat": 52.9011,
     "lng": 16.5726,
     "type": "community",
@@ -154,14 +154,14 @@
   },
   {
     "id": "inowroclaw",
-    "name": "Inowrocław",
+    "name": "Inowroclaw",
     "lat": 52.7815,
     "lng": 18.2463,
     "type": "community"
   },
   {
     "id": "aleksandrow",
-    "name": "Aleksandrów",
+    "name": "Aleksandrow",
     "lat": 52.8765,
     "lng": 18.6941,
     "type": "community",
@@ -169,7 +169,7 @@
   },
   {
     "id": "wloclawek",
-    "name": "Włocławek",
+    "name": "Wloclawek",
     "lat": 52.6656,
     "lng": 19.0961,
     "type": "community"
@@ -183,42 +183,42 @@
   },
   {
     "id": "plock",
-    "name": "Płock",
+    "name": "Plock",
     "lat": 52.5465,
     "lng": 19.7009,
     "type": "community"
   },
   {
     "id": "plonsk",
-    "name": "Płońsk",
+    "name": "Plonsk",
     "lat": 52.6227,
     "lng": 20.3705,
     "type": "community"
   },
   {
     "id": "mlawa",
-    "name": "Mława",
+    "name": "Mlawa",
     "lat": 53.1116,
     "lng": 20.3832,
     "type": "community"
   },
   {
     "id": "lomza",
-    "name": "Łomża",
+    "name": "Lomza",
     "lat": 53.1824,
     "lng": 22.0522,
     "type": "community"
   },
   {
     "id": "ostroleka",
-    "name": "Ostrołęka",
+    "name": "Ostroleka",
     "lat": 53.078,
     "lng": 21.5748,
     "type": "community"
   },
   {
     "id": "ciechanow",
-    "name": "Ciechanów",
+    "name": "Ciechanow",
     "lat": 52.882,
     "lng": 20.6191,
     "type": "community",
@@ -226,14 +226,14 @@
   },
   {
     "id": "suwalki",
-    "name": "Suwałki",
+    "name": "Suwalki",
     "lat": 54.0991,
     "lng": 22.9279,
     "type": "community"
   },
   {
     "id": "augustow",
-    "name": "Augustów",
+    "name": "Augustow",
     "lat": 53.8437,
     "lng": 22.9802,
     "type": "community",
@@ -241,7 +241,7 @@
   },
   {
     "id": "sokolka",
-    "name": "Sokółka",
+    "name": "Sokolka",
     "lat": 53.4049,
     "lng": 23.4996,
     "type": "community"
@@ -262,7 +262,7 @@
   },
   {
     "id": "byten",
-    "name": "Byteń",
+    "name": "Byten",
     "lat": 52.8817,
     "lng": 25.497,
     "type": "community",
@@ -277,7 +277,7 @@
   },
   {
     "id": "lowicz",
-    "name": "Łowicz",
+    "name": "Lowicz",
     "lat": 52.1012,
     "lng": 19.9475,
     "type": "community"
@@ -291,21 +291,21 @@
   },
   {
     "id": "gora-kalwaria",
-    "name": "Góra Kalwaria",
+    "name": "Gora Kalwaria",
     "lat": 51.9844,
     "lng": 21.214,
     "type": "community"
   },
   {
     "id": "minsk-mazowiecki",
-    "name": "Mińsk Mazowiecki",
+    "name": "Minsk Mazowiecki",
     "lat": 52.1796,
     "lng": 21.5695,
     "type": "community"
   },
   {
     "id": "wegrow",
-    "name": "Węgrów",
+    "name": "Wegrow",
     "lat": 52.3989,
     "lng": 22.0174,
     "type": "community"
@@ -326,35 +326,35 @@
   },
   {
     "id": "biala-podlaska",
-    "name": "Biała Podlaska",
+    "name": "Biala Podlaska",
     "lat": 52.0338,
     "lng": 23.1202,
     "type": "community"
   },
   {
     "id": "brzesc",
-    "name": "Brześć",
+    "name": "Brest-Litovsk",
     "lat": 52.0938,
     "lng": 23.6852,
     "type": "community"
   },
   {
     "id": "miedzyrzec-podlaski",
-    "name": "Międzyrzec Podlaski",
+    "name": "Miedzyrzec Podlaski",
     "lat": 51.9853,
     "lng": 22.7842,
     "type": "community"
   },
   {
     "id": "lukow",
-    "name": "Łuków",
+    "name": "Lukow",
     "lat": 51.9301,
     "lng": 22.3791,
     "type": "community"
   },
   {
     "id": "zdunska-wola",
-    "name": "Zduńska Wola",
+    "name": "Zdunska Wola",
     "lat": 51.5949,
     "lng": 18.9501,
     "type": "community"
@@ -368,14 +368,14 @@
   },
   {
     "id": "piotrkow-trybunalski",
-    "name": "Piotrków Trybunalski",
+    "name": "Piotrkow Trybunalski",
     "lat": 51.4129,
     "lng": 19.6887,
     "type": "community"
   },
   {
     "id": "tomaszow-mazowiecki",
-    "name": "Tomaszów Mazowiecki",
+    "name": "Tomaszow Mazowiecki",
     "lat": 51.5317,
     "lng": 20.0084,
     "type": "community"
@@ -389,14 +389,14 @@
   },
   {
     "id": "lubartow",
-    "name": "Lubartów",
+    "name": "Lubartow",
     "lat": 51.4585,
     "lng": 22.612,
     "type": "community"
   },
   {
     "id": "chelm",
-    "name": "Chełm",
+    "name": "Chelm",
     "lat": 51.1356,
     "lng": 23.4939,
     "type": "community",
@@ -404,14 +404,14 @@
   },
   {
     "id": "wlodawa",
-    "name": "Włodawa",
+    "name": "Wlodawa",
     "lat": 51.5413,
     "lng": 23.529,
     "type": "community"
   },
   {
     "id": "kamien-koszyrski",
-    "name": "Kamień Koszyrski",
+    "name": "Kamen-Kashirsky",
     "lat": 51.6271,
     "lng": 24.9614,
     "type": "community"
@@ -432,35 +432,35 @@
   },
   {
     "id": "wolkowysk",
-    "name": "Wołkowysk",
+    "name": "Volkovysk",
     "lat": 53.1647,
     "lng": 24.4582,
     "type": "community"
   },
   {
     "id": "baranowicze",
-    "name": "Baranowicze",
+    "name": "Baranovichi",
     "lat": 53.1323,
     "lng": 26.0184,
     "type": "community"
   },
   {
     "id": "slonim",
-    "name": "Słonim",
+    "name": "Slonim",
     "lat": 53.0927,
     "lng": 25.3193,
     "type": "community"
   },
   {
     "id": "nowogrodek",
-    "name": "Nowogródek",
+    "name": "Novogrudok",
     "lat": 53.5942,
     "lng": 25.8216,
     "type": "community"
   },
   {
     "id": "zdzieciol",
-    "name": "Zdzięcioł",
+    "name": "Zhetel",
     "lat": 53.4427,
     "lng": 25.3925,
     "type": "community"
@@ -474,49 +474,49 @@
   },
   {
     "id": "ejszyszki",
-    "name": "Ejszyszki",
+    "name": "Eishyshok",
     "lat": 54.1686,
     "lng": 25.0001,
     "type": "community"
   },
   {
     "id": "iwje",
-    "name": "Iwje",
+    "name": "Ivye",
     "lat": 53.9325,
     "lng": 25.7803,
     "type": "community"
   },
   {
     "id": "wolozyn",
-    "name": "Wołożyn",
+    "name": "Volozhin",
     "lat": 54.0888,
     "lng": 26.5257,
     "type": "community"
   },
   {
     "id": "rakow",
-    "name": "Raków",
+    "name": "Rakov",
     "lat": 53.9669,
     "lng": 27.0525,
     "type": "community"
   },
   {
     "id": "smorgonie",
-    "name": "Smorgonie",
+    "name": "Smorgon",
     "lat": 54.4818,
     "lng": 26.4013,
     "type": "community"
   },
   {
     "id": "molodeczno",
-    "name": "Mołodeczno",
+    "name": "Molodechno",
     "lat": 54.3073,
     "lng": 26.8389,
     "type": "community"
   },
   {
     "id": "wilejka",
-    "name": "Wilejka",
+    "name": "Vileyka",
     "lat": 54.4881,
     "lng": 26.9145,
     "type": "community"
@@ -530,49 +530,49 @@
   },
   {
     "id": "swieciany",
-    "name": "Święciany",
+    "name": "Svencionys",
     "lat": 55.1337,
     "lng": 26.163,
     "type": "community"
   },
   {
     "id": "braslaw",
-    "name": "Brasław",
+    "name": "Braslav",
     "lat": 55.6395,
     "lng": 27.0316,
     "type": "community"
   },
   {
     "id": "glebokie",
-    "name": "Głębokie",
+    "name": "Glubokoye",
     "lat": 55.1392,
     "lng": 27.6846,
     "type": "community"
   },
   {
     "id": "kobryn",
-    "name": "Kobryń",
+    "name": "Kobrin",
     "lat": 52.2086,
     "lng": 24.3543,
     "type": "community"
   },
   {
     "id": "janow-poleski",
-    "name": "Janów Poleski",
+    "name": "Janow Poleski",
     "lat": 52.1459,
     "lng": 25.5327,
     "type": "community"
   },
   {
     "id": "pinsk",
-    "name": "Pińsk",
+    "name": "Pinsk",
     "lat": 52.1114,
     "lng": 26.1025,
     "type": "community"
   },
   {
     "id": "luniniec",
-    "name": "Łuniniec",
+    "name": "Luninets",
     "lat": 52.2452,
     "lng": 26.7978,
     "type": "community"
@@ -586,7 +586,7 @@
   },
   {
     "id": "dabrowica",
-    "name": "Dąbrowica",
+    "name": "Dombrovitsa",
     "lat": 51.5709,
     "lng": 26.5661,
     "type": "community"
@@ -600,49 +600,49 @@
   },
   {
     "id": "stepan",
-    "name": "Stępań",
+    "name": "Stepan",
     "lat": 51.1331,
     "lng": 26.3059,
     "type": "community"
   },
   {
     "id": "kowel",
-    "name": "Kowel",
+    "name": "Kovel",
     "lat": 51.2121,
     "lng": 24.7089,
     "type": "community"
   },
   {
     "id": "wlodzimierz-wolynski",
-    "name": "Włodzimierz Wołyński",
+    "name": "Vladimir-Volynsk",
     "lat": 50.8475,
     "lng": 24.3193,
     "type": "community"
   },
   {
     "id": "luck",
-    "name": "Łuck",
+    "name": "Lutsk",
     "lat": 50.7451,
     "lng": 25.3201,
     "type": "community"
   },
   {
     "id": "rowne",
-    "name": "Równe",
+    "name": "Rovno",
     "lat": 51.2074,
     "lng": 26.5208,
     "type": "community"
   },
   {
     "id": "korzec",
-    "name": "Korzec",
+    "name": "Korets",
     "lat": 50.6195,
     "lng": 27.1597,
     "type": "community"
   },
   {
     "id": "poznan",
-    "name": "Poznań",
+    "name": "Poznan",
     "lat": 52.4007,
     "lng": 16.9197,
     "type": "community"
@@ -684,7 +684,7 @@
   },
   {
     "id": "czestochowa",
-    "name": "Częstochowa",
+    "name": "Czestochowa",
     "lat": 50.809,
     "lng": 19.1244,
     "type": "community"
@@ -712,7 +712,7 @@
   },
   {
     "id": "bielsko-biala",
-    "name": "Bielsko-Biała",
+    "name": "Bielsko-Biala",
     "lat": 49.8221,
     "lng": 19.0449,
     "type": "community"
@@ -726,21 +726,21 @@
   },
   {
     "id": "nowy-sacz",
-    "name": "Nowy Sącz",
+    "name": "Nowy Sacz",
     "lat": 49.6249,
     "lng": 20.6913,
     "type": "community"
   },
   {
     "id": "tarnow",
-    "name": "Tarnów",
+    "name": "Tarnow",
     "lat": 50.026,
     "lng": 20.9641,
     "type": "community"
   },
   {
     "id": "debica",
-    "name": "Dębica",
+    "name": "Debica",
     "lat": 50.0515,
     "lng": 21.4105,
     "type": "community",
@@ -748,14 +748,14 @@
   },
   {
     "id": "rzeszow",
-    "name": "Rzeszów",
+    "name": "Rzeszow",
     "lat": 50.0375,
     "lng": 22.0047,
     "type": "community"
   },
   {
     "id": "jaslo",
-    "name": "Jasło",
+    "name": "Jaslo",
     "lat": 49.747,
     "lng": 21.4936,
     "type": "community"
@@ -769,14 +769,14 @@
   },
   {
     "id": "przemysl",
-    "name": "Przemyśl",
+    "name": "Przemysl",
     "lat": 49.7836,
     "lng": 22.7885,
     "type": "community"
   },
   {
     "id": "jaroslaw",
-    "name": "Jarosław",
+    "name": "Jaroslaw",
     "lat": 50.04,
     "lng": 22.6574,
     "type": "community"
@@ -790,7 +790,7 @@
   },
   {
     "id": "konskie",
-    "name": "Końskie",
+    "name": "Konskie",
     "lat": 51.191,
     "lng": 20.4072,
     "type": "community"
@@ -804,7 +804,7 @@
   },
   {
     "id": "opatow",
-    "name": "Opatów",
+    "name": "Opatow",
     "lat": 50.8018,
     "lng": 21.4238,
     "type": "community"
@@ -818,7 +818,7 @@
   },
   {
     "id": "bilgoraj",
-    "name": "Biłgoraj",
+    "name": "Bilgoraj",
     "lat": 50.541,
     "lng": 22.722,
     "type": "community",
@@ -826,7 +826,7 @@
   },
   {
     "id": "pinczow",
-    "name": "Pińczów",
+    "name": "Pinczow",
     "lat": 50.5202,
     "lng": 20.5256,
     "type": "community"
@@ -840,7 +840,7 @@
   },
   {
     "id": "miechow",
-    "name": "Miechów",
+    "name": "Miechow",
     "lat": 50.3566,
     "lng": 20.0277,
     "type": "community"
@@ -861,14 +861,14 @@
   },
   {
     "id": "krasnik",
-    "name": "Kraśnik",
+    "name": "Krasnik",
     "lat": 50.9435,
     "lng": 22.2084,
     "type": "community"
   },
   {
     "id": "zamosc",
-    "name": "Zamość",
+    "name": "Zamosc",
     "lat": 50.7212,
     "lng": 23.2596,
     "type": "community"
@@ -883,7 +883,7 @@
   },
   {
     "id": "krzemieniec",
-    "name": "Krzemieniec",
+    "name": "Kremenets",
     "lat": 50.0961,
     "lng": 25.7261,
     "type": "community"
@@ -897,14 +897,14 @@
   },
   {
     "id": "zloczow",
-    "name": "Złoczów",
+    "name": "Zloczow",
     "lat": 49.8057,
     "lng": 24.8989,
     "type": "community"
   },
   {
     "id": "zbaraz",
-    "name": "Zbaraż",
+    "name": "Zbarazh",
     "lat": 49.6607,
     "lng": 25.7768,
     "type": "community"
@@ -968,28 +968,28 @@
   },
   {
     "id": "stanislawow",
-    "name": "Stanisławów",
+    "name": "Stanislawow",
     "lat": 48.7482,
     "lng": 24.5207,
     "type": "community"
   },
   {
     "id": "tlumacz",
-    "name": "Tłumacz",
+    "name": "Tlumacz",
     "lat": 48.8666,
     "lng": 25.0012,
     "type": "community"
   },
   {
     "id": "tluste",
-    "name": "Tłuste",
+    "name": "Tluste",
     "lat": 48.8449,
     "lng": 25.7259,
     "type": "community"
   },
   {
     "id": "skala",
-    "name": "Skała",
+    "name": "Skala",
     "lat": 48.8466,
     "lng": 26.2016,
     "type": "community"
@@ -1004,7 +1004,7 @@
   },
   {
     "id": "czortkow",
-    "name": "Czortków",
+    "name": "Czortkow",
     "lat": 49.0161,
     "lng": 25.7925,
     "type": "community",
@@ -1012,14 +1012,14 @@
   },
   {
     "id": "kolomyja",
-    "name": "Kołomyja",
+    "name": "Kolomyja",
     "lat": 48.5259,
     "lng": 25.0381,
     "type": "community"
   },
   {
     "id": "sniatyn",
-    "name": "Śniatyn",
+    "name": "Sniatyn",
     "lat": 48.4523,
     "lng": 25.5518,
     "type": "community"
@@ -1033,7 +1033,7 @@
   },
   {
     "id": "belz",
-    "name": "Bełz",
+    "name": "Belz",
     "lat": 50.3826,
     "lng": 24.0066,
     "type": "community",

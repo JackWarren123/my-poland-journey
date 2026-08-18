@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Video</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+  }
+  iframe {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+</style>
+</head>
+<body>
+<script>
+  // Exists solely so the native app (see js/map.js) can embed YouTube videos
+  // from a genuine https:// domain. The app's own local content can't get a
+  // real https origin — Capacitor's iOS bridge only accepts a truly custom
+  // URL scheme for iosScheme, silently rejecting "https" and falling back
+  // to "capacitor://" — and YouTube's embed player rejects that origin
+  // outright (Error 153). This page is fetched over the real network from
+  // the real deployed domain, so it has a real origin YouTube accepts;
+  // the app loads this page in an iframe instead of embedding YouTube
+  // directly. Built via createElement + property assignment rather than an
+  // HTML string, since some WebKit versions don't reliably apply
+  // referrerpolicy (and other attributes) to iframes injected via innerHTML.
+  var videoId = new URLSearchParams(window.location.search).get('v');
+  if (videoId) {
+    var iframe = document.createElement('iframe');
+    // autoplay=1: this page only ever gets loaded from map.js's video-facade
+    // click handler, i.e. always in direct response to a real tap — so it's
+    // safe to autoplay immediately instead of surfacing YouTube's own
+    // paused thumbnail and requiring a second tap.
+    iframe.src =
+      'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(videoId) +
+      '?playsinline=1&autoplay=1&origin=' + encodeURIComponent(window.location.origin);
+    iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+    iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+    iframe.allowFullscreen = true;
+    document.body.appendChild(iframe);
+  }
+</script>
+</body>
+</html>

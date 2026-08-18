@@ -1,4 +1,4 @@
-const CACHE = 'poland-journey-v4';
+const CACHE = 'poland-journey-v44';
 
 const PRECACHE = [
   '/',
